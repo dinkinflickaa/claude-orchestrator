@@ -8,7 +8,11 @@ A multi-agent orchestration system for Claude Code. Routes complex tasks through
 curl -sL https://raw.githubusercontent.com/dinkinflickaa/claude-orchestrator/main/install.sh | bash
 ```
 
-## Usage
+## Commands
+
+### `/orchestrate` - Full Workflow
+
+Complete workflow with design audits, specs, tests, and implementation audits.
 
 ```bash
 /orchestrate <task description>
@@ -21,6 +25,52 @@ curl -sL https://raw.githubusercontent.com/dinkinflickaa/claude-orchestrator/mai
 /orchestrate refactor the API layer
 ```
 
+**Workflow:**
+```
+Architect → Design Audit → Spec → [Implementer + Test Writer] → Test Runner → Impl Audit
+```
+
+### `/poc` - Rapid Prototyping
+
+Fast-track for experimental features. Skips audits, specs, and tests.
+
+```bash
+/poc <task description>
+```
+
+**Examples:**
+```bash
+/poc experiment with Redis caching
+/poc try GraphQL subscriptions
+/poc spike out the new UI component
+```
+
+**Workflow:**
+```
+Architect → Implementer → Store Debt
+```
+
+**What gets skipped:** Design audit, spec writer, test writer, test runner, implementation audit
+
+### `/graduate` - Promote POC to Production
+
+Add tests and audits to a validated POC.
+
+```bash
+/graduate <task-slug>
+```
+
+**Examples:**
+```bash
+/graduate redis-caching
+/graduate graphql-subscriptions
+```
+
+**Workflow:**
+```
+Retrieve POC → Test Writer → Test Runner → Impl Audit → Complete
+```
+
 ## What Gets Installed
 
 ```
@@ -28,7 +78,9 @@ your-project/
 ├── CLAUDE.md                      # Your project-specific instructions (edit this)
 └── .claude/
     ├── commands/
-    │   └── orchestrate.md         # The /orchestrate command
+    │   ├── orchestrate.md         # /orchestrate command
+    │   ├── poc.md                 # /poc command
+    │   └── graduate.md            # /graduate command
     └── agents/
         ├── architect.md
         ├── auditor.md
@@ -51,20 +103,37 @@ your-project/
 | auditor | Reviews design and implementation quality |
 | context-manager | Maintains shared state across phases |
 
-## Workflow
+## Context Propagation
+
+All commands share state through the context-manager:
 
 ```
-Architect → Design Audit → Spec Writer → [Implementer + Test Writer] → Test Runner → Impl Audit
+.claude/context/
+├── current-task.md
+├── history.md
+└── tasks/
+    └── <task-slug>/
+        ├── metadata.json      # mode, status, timestamps
+        ├── architect.md
+        ├── spec.md
+        ├── implementations/
+        ├── tests/
+        ├── test-results.md
+        ├── debt.md            # POC only
+        └── ...
 ```
 
-- **Design Audit**: Catches architecture issues before implementation
-- **Implementation Audit**: Catches code issues after tests run
-- **Feedback loops**: Max 2 iterations per audit stage
+**POC Lifecycle:**
+```
+in-progress → poc-complete → graduated
+     ↑              ↑             ↑
+   /poc         STORE debt    /graduate
+```
 
 ## Why Command-Based?
 
 - **Zero CLAUDE.md pollution** - Your project config stays clean
-- **Opt-in** - Use `/orchestrate` when you want it, regular Claude otherwise
+- **Opt-in** - Use commands when you want orchestration
 - **Discoverable** - Shows up in `/help`
 - **Portable** - Just copy `.claude/` to any project
 

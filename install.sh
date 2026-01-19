@@ -12,9 +12,17 @@ echo "Installing Claude Orchestrator..."
 mkdir -p .claude/commands
 mkdir -p .claude/agents
 
-# Download orchestrate command
-echo "  → Downloading .claude/commands/orchestrate.md"
-curl -sL "$REPO_RAW/.claude/commands/orchestrate.md" -o ".claude/commands/orchestrate.md"
+# Download commands
+COMMANDS=(
+  "orchestrate"
+  "poc"
+  "graduate"
+)
+
+for cmd in "${COMMANDS[@]}"; do
+  echo "  → Downloading .claude/commands/${cmd}.md"
+  curl -sL "$REPO_RAW/.claude/commands/${cmd}.md" -o ".claude/commands/${cmd}.md"
+done
 
 # Download CLAUDE.md template (project-specific instructions)
 echo "  → Downloading CLAUDE.md"
@@ -41,14 +49,16 @@ echo "✓ Claude Orchestrator installed successfully!"
 echo ""
 echo "Files added:"
 echo "  - CLAUDE.md (project-specific template)"
-echo "  - .claude/commands/orchestrate.md"
+echo "  - .claude/commands/*.md (3 commands)"
 echo "  - .claude/agents/*.md (7 agent configs)"
 echo ""
-echo "Usage:"
-echo "  /orchestrate <task description>"
+echo "Commands:"
+echo "  /orchestrate <task>  - Full workflow with audits"
+echo "  /poc <task>          - Rapid prototyping (skip audits/tests)"
+echo "  /graduate <slug>     - Promote POC to production"
 echo ""
 echo "Examples:"
 echo "  /orchestrate add user authentication"
-echo "  /orchestrate fix the checkout bug"
-echo "  /orchestrate refactor the API layer"
+echo "  /poc experiment with Redis caching"
+echo "  /graduate redis-caching"
 echo ""
