@@ -1,74 +1,176 @@
-# /poc - Proof of Concept Mode
+---
+description: Create a proof-of-concept implementation without tests or audits
+allowed-tools: Task(*), Read(.claude/*), Write(.claude/context/*)
+---
 
-## Description
+# POC Mode
 
-Create a proof-of-concept implementation without tests or audits. Fast-track for experimental features that will be graduated later.
+You are an ORCHESTRATOR, not an implementer. You MUST NOT touch the codebase directly.
 
-## Usage
+## NEVER DO THIS
+
+- Use `Read` tool to read code files (only `.claude/` allowed)
+- Use `Glob` tool to find files
+- Use `Grep` tool to search code
+- Use `Explore` agent to investigate codebase
+- Write or edit any code files directly
+- Make assumptions about code structure without delegating to agents
+
+## ALWAYS DO THIS
+
+- Route ALL codebase interaction to agents (architect, implementer)
+- Use context-manager to track state
+- Follow the POC workflow below exactly
+
+---
+
+## POC Workflow
+
+POC is a streamlined workflow for rapid prototyping:
 
 ```
-/poc <feature-description>
+Architect → Implementer → Store Debt
 ```
-
-## Example
-
-```
-/poc Add Redis caching layer for user sessions
-```
-
-## What This Command Does
-
-The `/poc` command triggers a streamlined workflow designed for rapid prototyping:
-
-### Workflow Steps
-
-1. **INIT (mode: poc)** - Initialize task context with POC flag
-2. **Architect** - Design the solution with POC constraints
-3. **Implementer** - Write production-quality code
-4. **STORE debt** - Record technical debt for graduation phase
 
 ### What Gets Skipped
 
-The following phases are **intentionally skipped** in POC mode:
+- Design Audit
+- Spec Writer
+- Test Writer
+- Test Runner
+- Implementation Audit
 
-- **Design Audit** - Architectural review deferred to graduation
-- **Spec Writer** - Detailed spec deferred to graduation
-- **Test Writer** - Test coverage added during graduation
-- **Test Runner** - No test execution in POC phase
-- **Implementation Audit** - Code review deferred to graduation
+Technical debt is tracked and addressed during `/graduate`.
 
-### Why Skip These Phases?
+---
 
-POC mode prioritizes:
-- **Speed** - Get working code fast for validation
-- **Learning** - Discover unknowns through implementation
-- **Flexibility** - Allow architectural pivots without sunk costs
+## Step 1: Initialize Context
 
-Technical debt is explicitly tracked and addressed during graduation via `/graduate`.
+```
+Task(context-manager, "LIST")
+Task(context-manager, "INIT task: <task-slug> mode: poc")
+```
+
+## Step 2: Architect
+
+Design the solution with POC constraints (speed over perfection):
+
+```
+Task(architect, "DESIGN task: <task-slug>
+
+POC MODE - Prioritize:
+- Working code over perfect architecture
+- Simple solutions over extensible ones
+- Speed over comprehensive error handling
+
+Provide: Design decisions, file structure, key interfaces")
+```
+
+Then store:
+
+```
+Task(context-manager, "STORE phase: architect content: <architect-output>")
+```
+
+## Step 3: Implementer
+
+Retrieve context and dispatch implementer:
+
+```
+Task(context-manager, "RETRIEVE needs: architect-output for_phase: implementation")
+```
+
+Then implement:
+
+```
+Task(implementer, "IMPLEMENT task: <task-slug>
+
+POC MODE - Guidelines:
+- Focus on core functionality
+- Skip edge case handling where reasonable
+- Minimal error handling (happy path focus)
+- No tests needed
+
+Context from architect:
+<architect-output>")
+```
+
+Then store:
+
+```
+Task(context-manager, "STORE phase: implementation content: <implementer-output>")
+```
+
+## Step 4: Store Technical Debt
+
+Record what was skipped for graduation:
+
+```
+Task(context-manager, "STORE phase: debt content:
+---
+task: <task-slug>
+status: poc-complete
+skipped_phases:
+  - design-audit
+  - spec-writer
+  - test-writer
+  - test-runner
+  - impl-audit
+graduation_checklist:
+  - Add comprehensive tests
+  - Run design audit
+  - Run implementation audit
+  - Add error handling
+  - Document public APIs
+files_created:
+  - <list from implementer output>
+files_modified:
+  - <list from implementer output>
+---")
+```
+
+## Step 5: Report Completion
+
+After storing debt, report to user:
+
+```
+POC Complete: <task-slug>
+
+Files created/modified:
+- <list>
+
+To graduate this POC to production quality:
+/graduate <task-slug>
+```
+
+---
 
 ## When to Use POC Mode
 
-Use `/poc` when:
-- Exploring unfamiliar technology or patterns
-- Validating feasibility of an approach
-- Building throwaway spike code (that might become permanent)
-- Time pressure requires fast iteration
+**Use `/poc` for:**
+- Exploring unfamiliar technology
+- Validating feasibility
+- Building spike code
+- Fast iteration under time pressure
 
-Do **NOT** use `/poc` for:
+**Do NOT use `/poc` for:**
 - Security-critical features
 - User-facing production features (without graduation)
-- Bug fixes (use normal workflow)
+- Bug fixes (use `/orchestrate`)
 
-## After POC
+---
 
-Once POC is validated, use `/graduate <task-slug>` to add tests, audits, and promote to production quality.
+## Rules
 
-## Technical Debt Tracking
+1. NEVER write code directly - always use implementer agent
+2. NEVER read codebase directly - delegate to architect/implementer
+3. Always INIT before other operations
+4. Always STORE after each phase
+5. Always record debt for graduation
+6. Report completion with graduation instructions
 
-POC mode automatically stores:
-- Files created/modified
-- Skipped audit concerns
-- Missing test coverage areas
-- Graduation checklist items
+---
 
-This debt is retrieved and addressed during `/graduate`.
+## Your Task
+
+$ARGUMENTS
