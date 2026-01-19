@@ -36,6 +36,7 @@ For **EVERY** new task from the user:
 □ Complex bug   → 3+ files, unclear cause, needs investigation
 □ New feature   → Adding new functionality
 □ Design flaw   → Architectural issue, needs redesign
+□ POC mode      → Use /poc command for rapid prototyping
 ```
 
 ### Step 2: Initialize Context
@@ -47,12 +48,14 @@ Task(context-manager, "INIT task: <task-name>")  # Create new task
 
 ### Step 3: Follow Routing Table
 
-| Classification | Route                                                                                               |
-| -------------- | --------------------------------------------------------------------------------------------------- |
-| Simple bug     | `Implementer + Test Writer → Test Runner → Impl Audit`                                              |
-| Complex bug    | `Architect → Design Audit → Spec → Implementer + Test Writer → Test Runner → Impl Audit`            |
-| New feature    | `Architect → Design Audit → Spec → Implementer + Test Writer → Test Runner → Impl Audit`            |
-| Design flaw    | `Architect (redesign) → Design Audit → Spec → Implementer + Test Writer → Test Runner → Impl Audit` |
+| Classification       | Route                                                                                               |
+| -------------------- | --------------------------------------------------------------------------------------------------- |
+| Simple bug           | `Implementer + Test Writer → Test Runner → Impl Audit`                                              |
+| Complex bug          | `Architect → Design Audit → Spec → Implementer + Test Writer → Test Runner → Impl Audit`            |
+| New feature          | `Architect → Design Audit → Spec → Implementer + Test Writer → Test Runner → Impl Audit`            |
+| Design flaw          | `Architect (redesign) → Design Audit → Spec → Implementer + Test Writer → Test Runner → Impl Audit` |
+| POC (/poc)           | `Architect → Implementer → STORE debt` (skip audits, spec, tests)                                   |
+| Graduate (/graduate) | `Test Writer → Test Runner → IMPL-AUDIT (poc-graduate) → STORE graduate-complete`                   |
 
 **⚠️ DO NOT SKIP THESE STEPS. DO NOT EXPLORE THE CODEBASE YOURSELF.**
 
@@ -77,6 +80,111 @@ Architect → Design Audit ─(flaw)─────┘
 
 1. **Design Audit** (early): Catches architecture issues BEFORE spec/implementation
 2. **Implementation Audit** (late): Catches code issues AFTER tests run
+
+---
+
+## 🧪 POC MODE
+
+**Use POC mode for rapid prototyping when you need working code fast without full quality gates.**
+
+### When to Use POC Mode
+
+- **Use POC mode** when:
+  - Exploring a new feature or approach
+  - Need quick feedback on feasibility
+  - Prototyping before full implementation
+  - Time-sensitive demos or experiments
+
+- **Use standard workflow** when:
+  - Production code
+  - Critical bug fixes
+  - Code that will be maintained long-term
+  - Security or data integrity concerns
+
+### POC Workflow
+
+```
+1. INIT task: <task-name> mode: poc
+2. Architect → STORE phase: architect
+3. Implementer → STORE phase: implementation
+4. STORE phase: debt (document shortcuts taken)
+```
+
+**What Gets Skipped:**
+- Design Audit (no architecture review)
+- Spec Writer (no formal spec)
+- Test Writer (no test coverage)
+- Test Runner (no validation)
+- Implementation Audit (no code review)
+
+### Technical Debt Tracking
+
+All POC shortcuts are tracked in `debt.md`:
+- What was skipped
+- Architectural decisions deferred
+- Missing test coverage
+- Security concerns not addressed
+
+### POC Status Lifecycle
+
+```
+in-progress → poc-complete → graduated
+(mode: poc - set at INIT, immutable)
+```
+
+- **Status: in-progress**: Active POC development (initial state for all tasks)
+- **Status: poc-complete**: POC code working, debt documented (set via STORE phase: debt)
+- **Status: graduated**: POC passed full quality gates (tests + audit)
+- **Mode: poc**: Set at INIT, immutable, indicates this task uses POC workflow
+
+---
+
+## 🎓 GRADUATION WORKFLOW
+
+**Graduate a POC to production-ready code by adding tests and passing audit.**
+
+### When to Graduate
+
+- POC proves valuable and needs production deployment
+- POC code will be maintained long-term
+- POC interacts with critical systems (auth, data, security)
+
+### Graduate Workflow
+
+```
+1. LIST (validate task has mode: poc and status: poc-complete)
+2. RETRIEVE needs: architect,implementation for_phase: graduate
+3. Test Writer → STORE phase: tests
+4. Test Runner → STORE phase: test-results
+5. IMPL-AUDIT audit_mode: poc-graduate iteration: <n>
+6. STORE phase: graduate-complete (or graduate-fail)
+```
+
+### Validation Requirements
+
+Before graduation:
+- Task must have `mode: poc`
+- Task must have `status: poc-complete`
+- Implementation files must exist
+- Debt must be documented
+
+During graduation:
+- Test coverage must be comprehensive
+- All tests must pass
+- Implementation audit must pass
+
+### Failure Handling
+
+**If tests fail:**
+- Implementer fixes → Re-run tests (max 2 iterations)
+
+**If audit fails:**
+- Implementer addresses issues → Re-test → Re-audit (max 2 iterations)
+
+**If max iterations reached:**
+- Set status to `graduate-fail`
+- Escalate to user with accumulated issues
+- User decides: fix POC, rewrite, or abandon
 
 ---
 
@@ -167,6 +275,22 @@ USER REQUEST RECEIVED
 | context-manager | Shared state                               | haiku  |
 | auditor         | Review design + implementation, find flaws | opus   |
 
+---
+
+## Agent Output Format
+
+**All agents use structured markdown with `##` headers for consistent handoffs.**
+
+| Agent       | Required Sections                                              |
+|-------------|----------------------------------------------------------------|
+| architect   | Design Decisions, Interfaces, Constraints, Files Affected      |
+| spec-writer | Implementation Tasks (each with File, Signatures, Dependencies)|
+| implementer | Files Modified, Public API, Edge Cases, Notes for Testing      |
+| test-writer | Test Files, Coverage Areas, Run Command                        |
+| auditor     | Verdict, Issues (with Location, Description, Suggested Fix)    |
+
+---
+
 ## Phase 3: Implementation
 
 **For EACH task, dispatch BOTH agents in parallel:**
@@ -220,6 +344,18 @@ Commands: `INIT`, `STORE`, `RETRIEVE`, `LIST`
 
 Run `LIST` before `INIT` to avoid duplicate tasks.
 
+### Key Parameters
+
+**INIT:**
+- `mode: poc` - Initialize task in POC mode (optional, defaults to standard)
+
+**STORE:**
+- `phase: debt` - Store technical debt documentation from POC
+- `phase: graduate-complete` - Mark POC graduation as successful
+
+**RETRIEVE:**
+- `for_phase: graduate` - Retrieve context for POC graduation (gets architect + implementation)
+
 ## Progressive Context Protocol
 
 ### Before Each Phase (RETRIEVE)
@@ -233,6 +369,7 @@ Run `LIST` before `INIT` to avoid duplicate tasks.
 | Implementation Audit | `RETRIEVE needs: all for_phase: impl-audit`                                  |
 | Architect (revision) | `RETRIEVE needs: design-audit-feedback,architect-output for_phase: revision` |
 | Implementer (fix)    | `RETRIEVE needs: impl-audit-feedback,implementation for_phase: fix`          |
+| Graduate (POC)       | `RETRIEVE needs: architect,implementation for_phase: graduate`               |
 
 Pass retrieved context to agent in prompt.
 
@@ -249,6 +386,8 @@ Pass retrieved context to agent in prompt.
 | Test Runner          | `STORE phase: test-results content: <output>`                      |
 | Implementation Audit | `STORE phase: impl-audit iteration: <n> content: <output>`         |
 | Implementer (fix)    | `STORE phase: implementation-fix iteration: <n> content: <output>` |
+| POC Debt             | `STORE phase: debt content: <debt-doc>`                            |
+| Graduate Complete    | `STORE phase: graduate-complete content: <summary>`                |
 
 ### Example Flow (with Two-Stage Audit)
 

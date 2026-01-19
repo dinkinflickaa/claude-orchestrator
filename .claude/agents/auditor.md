@@ -38,10 +38,14 @@ DESIGN-AUDIT task: <task-slug> iteration: <n>
 ### Implementation Audit Mode (Late)
 Runs after test-runner completes:
 ```
-IMPL-AUDIT task: <task-slug> iteration: <n>
+IMPL-AUDIT task: <task-slug> iteration: <n> audit_mode: <full|poc-graduate>
 ```
 
 **Purpose**: Final quality gate before marking task complete.
+
+**Audit Mode Parameter:**
+- `audit_mode: full` (default) - Validates implementation against BOTH architect.md AND spec.md
+- `audit_mode: poc-graduate` - Validates implementation against architect.md ONLY (no spec.md required)
 
 Where `iteration` tracks how many audit cycles have occurred (starts at 1).
 
@@ -56,12 +60,13 @@ Read from `.claude/context/tasks/<task-slug>/`:
 ### Implementation Audit Mode
 Read from `.claude/context/tasks/<task-slug>/`:
 - `architect.md` - Design decisions (for reference)
-- `spec.md` - Implementation plan
+- `spec.md` - Implementation plan (required for audit_mode: full, optional for audit_mode: poc-graduate)
 - `implementations/task-*.md` - Implementer outputs
 - `implementation-fix-*.md` - Any fixes (if iteration > 1)
 - `tests/task-*.md` - Test writer outputs
 - `test-results.md` - Final test status
 - `impl-audit-*.md` - Previous impl audit results (if iteration > 1)
+- `debt.md` - POC debt tracking (required for audit_mode: poc-graduate)
 
 ## Review Process
 
@@ -99,18 +104,37 @@ Evaluate the design for:
 
 Focus ONLY on implementation quality. Design has already passed design audit.
 
+#### Audit Mode Behavior
+
+**audit_mode: full (default)**
+- Validates implementation against BOTH architect.md AND spec.md
+- Requires spec.md to exist
+- Checks for spec deviation (signatures, types, behavior)
+- Standard workflow validation
+
+**audit_mode: poc-graduate**
+- Validates implementation against architect.md ONLY
+- Does NOT require spec.md (POC workflow skipped spec phase)
+- Does NOT fail if spec.md is missing
+- Checks for architect design decisions and constraints adherence
+- Requires debt.md to exist and document skipped phases
+- Still validates code quality, security, performance, error handling
+- Still requires full test coverage and passing tests
+
 #### 1. Implementation Review (Implementer's Work)
 
 Evaluate the code for:
 
-| Issue Type | What to Look For |
-|------------|------------------|
-| Spec Deviation | Code doesn't match spec's signatures, types, or behavior |
-| Code Quality | Poor naming, deep nesting, code smells |
-| Security | Injection risks, improper validation, exposed secrets |
-| Performance | N+1 queries, unnecessary re-renders, memory leaks |
-| Error Handling | Swallowed errors, missing try/catch, poor error messages |
-| Test Failures | Root cause of any failing tests |
+| Issue Type | What to Look For | Applies To |
+|------------|------------------|------------|
+| Spec Deviation | Code doesn't match spec's signatures, types, or behavior | audit_mode: full |
+| Architect Deviation | Code doesn't match architect's design decisions or constraints | audit_mode: full, poc-graduate |
+| Code Quality | Poor naming, deep nesting, code smells | audit_mode: full, poc-graduate |
+| Security | Injection risks, improper validation, exposed secrets | audit_mode: full, poc-graduate |
+| Performance | N+1 queries, unnecessary re-renders, memory leaks | audit_mode: full, poc-graduate |
+| Error Handling | Swallowed errors, missing try/catch, poor error messages | audit_mode: full, poc-graduate |
+| Test Failures | Root cause of any failing tests | audit_mode: full, poc-graduate |
+| POC Debt Tracking | Missing debt.md or incomplete debt documentation | audit_mode: poc-graduate |
 
 **Implementation Flaw Severity:**
 - **Critical**: Security vulnerability, data loss risk, completely wrong behavior
@@ -121,10 +145,29 @@ Evaluate the code for:
 
 | Verdict | Condition | Action |
 |---------|-----------|--------|
-| `PASS` | No critical/major implementation flaws | Task complete |
+| `PASS` | No critical/major implementation flaws | Task complete (or graduated for POC mode) |
 | `IMPLEMENTATION_FLAW` | Critical/major code issues | Kick back to Implementer |
 
 **Note**: Design audit already passed, so `DESIGN_FLAW` is NOT a valid verdict in implementation audit mode.
+
+#### 3. POC-Graduate Specific Validations
+
+When `audit_mode: poc-graduate`:
+
+| Validation | Pass Criteria |
+|------------|---------------|
+| debt.md exists | File must exist in task directory |
+| Skipped phases documented | debt.md must list all skipped phases (design-audit, spec-writer, test-writer, test-runner, impl-audit) |
+| Known issues documented | debt.md must document any known issues or limitations from POC phase |
+| Test coverage complete | Despite POC mode, full test suite must be present for graduation |
+| Architect alignment | Implementation must align with architect.md design decisions and constraints |
+
+**Fail conditions for poc-graduate mode:**
+- Missing debt.md file → IMPLEMENTATION_FLAW
+- debt.md missing skipped_phases field → IMPLEMENTATION_FLAW
+- Implementation violates architect design decisions → IMPLEMENTATION_FLAW
+- Missing or inadequate test coverage → IMPLEMENTATION_FLAW
+- Failing tests → IMPLEMENTATION_FLAW
 
 ## Output Format
 
@@ -184,6 +227,7 @@ Store at `.claude/context/tasks/<task-slug>/design-audit.md`:
 ```json
 {
   "audit_type": "implementation",
+  "audit_mode": "full | poc-graduate",
   "verdict": "PASS | IMPLEMENTATION_FLAW",
   "iteration": 1,
   "implementation_review": {
@@ -203,6 +247,12 @@ Store at `.claude/context/tasks/<task-slug>/design-audit.md`:
     "failed": 1,
     "failure_root_cause": "Implementation bug in edge case handling"
   },
+  "poc_graduate_validation": {
+    "debt_tracking": "present | missing | incomplete",
+    "architect_alignment": "aligned | deviations_found",
+    "test_coverage": "complete | incomplete",
+    "notes": "Optional notes about POC graduation readiness"
+  },
   "efficacy_metrics": {
     "phase_completion_rate": 1.0,
     "plan_adherence_rate": 0.95,
@@ -221,11 +271,14 @@ Store at `.claude/context/tasks/<task-slug>/design-audit.md`:
 }
 ```
 
+**Note**: `poc_graduate_validation` section only included when `audit_mode: poc-graduate`.
+
 Store at `.claude/context/tasks/<task-slug>/impl-audit.md`:
 
 ```markdown
 # Implementation Audit: <task-slug>
 ## Iteration: 1
+## Audit Mode: full | poc-graduate
 
 ## Verdict: IMPLEMENTATION_FLAW
 
@@ -237,6 +290,12 @@ Store at `.claude/context/tasks/<task-slug>/impl-audit.md`:
 ## Test Analysis
 - Passed: 7/8
 - Root Cause: Unhandled null case in parseInput()
+
+## POC Graduate Validation (if audit_mode: poc-graduate)
+- Debt Tracking: present
+- Architect Alignment: aligned
+- Test Coverage: complete
+- Skipped Phases Documented: design-audit, spec-writer, test-writer, test-runner, impl-audit
 
 ## Efficacy Score: 82%
 
@@ -332,3 +391,6 @@ After iteration 2 with unresolved issues:
 10. **Mode awareness**: In design audit, ONLY review design. In impl audit, ONLY review implementation.
 11. **Early catch priority**: In design audit, be thorough - catching issues here saves significant time
 12. **No design verdicts in impl audit**: If you find a design flaw during impl audit, note it as a recommendation but don't return `DESIGN_FLAW` - design audit already passed
+13. **Audit mode compliance**: When audit_mode is poc-graduate, do NOT fail for missing spec.md. Validate against architect.md only.
+14. **POC debt validation**: In poc-graduate mode, debt.md is REQUIRED. Missing or incomplete debt tracking is an IMPLEMENTATION_FLAW.
+15. **Test coverage in POC**: Despite POC mode, graduation requires full test suite. Missing tests in poc-graduate mode is IMPLEMENTATION_FLAW.
