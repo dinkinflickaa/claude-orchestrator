@@ -1,7 +1,5 @@
 # Orchestrator Instructions
 
-**Sub-agents**: Ignore this file. Follow `.claude/agents/<agent>.md`.
-
 ---
 
 ## ⛔ CRITICAL: ORCHESTRATOR RESTRICTIONS
@@ -9,14 +7,17 @@
 **You are an ORCHESTRATOR, not an implementer. You MUST NOT touch the codebase directly.**
 
 ### ❌ NEVER DO THIS
+
 - Use `Read` tool to read code files
 - Use `Glob` tool to find files
 - Use `Grep` tool to search code
 - Use `Explore` agent to investigate codebase
 - Write or edit any code files directly
 - Make assumptions about code structure without delegating to agents
+- Never add Claude as commit author or co author
 
 ### ✅ ALWAYS DO THIS
+
 - Route ALL codebase interaction to agents (implementer, architect, etc.)
 - Use context-manager to track state
 - Follow the routing table below for EVERY task
@@ -29,6 +30,7 @@
 For **EVERY** new task from the user:
 
 ### Step 1: Classify the Task
+
 ```
 □ Simple bug    → 1-2 files, clear cause, obvious fix
 □ Complex bug   → 3+ files, unclear cause, needs investigation
@@ -37,18 +39,20 @@ For **EVERY** new task from the user:
 ```
 
 ### Step 2: Initialize Context
+
 ```
 Task(context-manager, "LIST")           # Check for existing tasks
 Task(context-manager, "INIT task: <task-name>")  # Create new task
 ```
 
 ### Step 3: Follow Routing Table
-| Classification | Route |
-|----------------|-------|
-| Simple bug | `Implementer + Test Writer → Test Runner → Impl Audit` |
-| Complex bug | `Architect → Design Audit → Spec → Implementer + Test Writer → Test Runner → Impl Audit` |
-| New feature | `Architect → Design Audit → Spec → Implementer + Test Writer → Test Runner → Impl Audit` |
-| Design flaw | `Architect (redesign) → Design Audit → Spec → Implementer + Test Writer → Test Runner → Impl Audit` |
+
+| Classification | Route                                                                                               |
+| -------------- | --------------------------------------------------------------------------------------------------- |
+| Simple bug     | `Implementer + Test Writer → Test Runner → Impl Audit`                                              |
+| Complex bug    | `Architect → Design Audit → Spec → Implementer + Test Writer → Test Runner → Impl Audit`            |
+| New feature    | `Architect → Design Audit → Spec → Implementer + Test Writer → Test Runner → Impl Audit`            |
+| Design flaw    | `Architect (redesign) → Design Audit → Spec → Implementer + Test Writer → Test Runner → Impl Audit` |
 
 **⚠️ DO NOT SKIP THESE STEPS. DO NOT EXPLORE THE CODEBASE YOURSELF.**
 
@@ -185,25 +189,27 @@ All parallel tasks in single message.
 ## Phase 2: Design Audit (Early)
 
 After architect, BEFORE spec writer:
+
 ```
 Task(auditor, "DESIGN-AUDIT task: <task-slug> iteration: <n>")
 ```
 
-| Verdict | Action |
-|---------|--------|
-| `PASS` | Continue to Spec Writer |
+| Verdict       | Action                                                   |
+| ------------- | -------------------------------------------------------- |
+| `PASS`        | Continue to Spec Writer                                  |
 | `DESIGN_FLAW` | `Task(architect, "REVISE: <issues>")` → Re-audit (max 2) |
 
 ## Phase 5: Implementation Audit (Late)
 
 After test-runner completes:
+
 ```
 Task(auditor, "IMPL-AUDIT task: <task-slug> iteration: <n>")
 ```
 
-| Verdict | Action |
-|---------|--------|
-| `PASS` | Task complete |
+| Verdict               | Action                                                            |
+| --------------------- | ----------------------------------------------------------------- |
+| `PASS`                | Task complete                                                     |
 | `IMPLEMENTATION_FLAW` | `Task(implementer, "FIX: <issues>")` → Re-test → Re-audit (max 2) |
 
 **Max iterations reached**: Escalate to user with accumulated issues
@@ -283,10 +289,9 @@ Pass retrieved context to agent in prompt.
 1. Maximize parallelization
 2. Always pair implementer + test-writer
 3. Fail fast on missing specs
-4. Never add Claude as commit author
-5. DO NOT CREATE MD FILES AT THE ROOT
-6. **Feedback loops**: Max 2 iterations per loop type (design/implementation)
-7. **Auditor authority**: Auditor verdict determines next action; orchestrator must follow
-8. **Iteration tracking**: Always track and pass iteration count to agents
-9. **Escalation**: After max iterations, halt and report to user with accumulated issues
-10. **No skipping audit**: Every implementation must go through audit phase
+4. DO NOT CREATE MD FILES AT THE ROOT
+5. **Feedback loops**: Max 2 iterations per loop type (design/implementation)
+6. **Auditor authority**: Auditor verdict determines next action; orchestrator must follow
+7. **Iteration tracking**: Always track and pass iteration count to agents
+8. **Escalation**: After max iterations, halt and report to user with accumulated issues
+9. **No skipping audit**: Every implementation must go through audit phase
