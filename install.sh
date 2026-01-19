@@ -8,12 +8,17 @@ REPO_RAW="https://raw.githubusercontent.com/dinkinflickaa/claude-orchestrator/ma
 
 echo "Installing Claude Orchestrator..."
 
-# Download CLAUDE.md
+# Create .claude directory structure
+mkdir -p .claude/commands
+mkdir -p .claude/agents
+
+# Download orchestrate command
+echo "  → Downloading .claude/commands/orchestrate.md"
+curl -sL "$REPO_RAW/.claude/commands/orchestrate.md" -o ".claude/commands/orchestrate.md"
+
+# Download CLAUDE.md template (project-specific instructions)
 echo "  → Downloading CLAUDE.md"
 curl -sL "$REPO_RAW/CLAUDE.md" -o CLAUDE.md
-
-# Create .claude/agents directory
-mkdir -p .claude/agents
 
 # Download agent files
 AGENTS=(
@@ -35,7 +40,15 @@ echo ""
 echo "✓ Claude Orchestrator installed successfully!"
 echo ""
 echo "Files added:"
-echo "  - CLAUDE.md"
+echo "  - CLAUDE.md (project-specific template)"
+echo "  - .claude/commands/orchestrate.md"
 echo "  - .claude/agents/*.md (7 agent configs)"
 echo ""
-echo "Add these to your .gitignore if you don't want to commit them."
+echo "Usage:"
+echo "  /orchestrate <task description>"
+echo ""
+echo "Examples:"
+echo "  /orchestrate add user authentication"
+echo "  /orchestrate fix the checkout bug"
+echo "  /orchestrate refactor the API layer"
+echo ""

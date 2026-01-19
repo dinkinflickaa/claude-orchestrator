@@ -1,6 +1,6 @@
 # Claude Orchestrator
 
-A multi-agent orchestration system for Claude Code that routes tasks through specialized agents for architecture, implementation, testing, and auditing.
+A multi-agent orchestration system for Claude Code. Routes complex tasks through specialized agents for architecture, implementation, testing, and auditing.
 
 ## Installation
 
@@ -8,9 +8,36 @@ A multi-agent orchestration system for Claude Code that routes tasks through spe
 curl -sL https://raw.githubusercontent.com/dinkinflickaa/claude-orchestrator/main/install.sh | bash
 ```
 
-This installs:
-- `CLAUDE.md` - Orchestrator instructions
-- `.claude/agents/` - 7 specialized agent configs
+## Usage
+
+```bash
+/orchestrate <task description>
+```
+
+**Examples:**
+```bash
+/orchestrate add user authentication
+/orchestrate fix the checkout bug
+/orchestrate refactor the API layer
+```
+
+## What Gets Installed
+
+```
+your-project/
+├── CLAUDE.md                      # Your project-specific instructions (edit this)
+└── .claude/
+    ├── commands/
+    │   └── orchestrate.md         # The /orchestrate command
+    └── agents/
+        ├── architect.md
+        ├── auditor.md
+        ├── context-manager.md
+        ├── implementer.md
+        ├── spec-writer.md
+        ├── test-runner.md
+        └── test-writer.md
+```
 
 ## Agents
 
@@ -27,12 +54,19 @@ This installs:
 ## Workflow
 
 ```
-Architect → Design Audit → Spec Writer → [Implementer + Test Writer] → Test Runner → Implementation Audit
+Architect → Design Audit → Spec Writer → [Implementer + Test Writer] → Test Runner → Impl Audit
 ```
 
 - **Design Audit**: Catches architecture issues before implementation
 - **Implementation Audit**: Catches code issues after tests run
 - **Feedback loops**: Max 2 iterations per audit stage
+
+## Why Command-Based?
+
+- **Zero CLAUDE.md pollution** - Your project config stays clean
+- **Opt-in** - Use `/orchestrate` when you want it, regular Claude otherwise
+- **Discoverable** - Shows up in `/help`
+- **Portable** - Just copy `.claude/` to any project
 
 ## License
 
