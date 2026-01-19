@@ -6,13 +6,28 @@ set -e
 
 REPO_RAW="https://raw.githubusercontent.com/dinkinflickaa/claude-orchestrator/main"
 
-echo "Installing Claude Orchestrator..."
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+MAGENTA='\033[0;35m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+DIM='\033[2m'
+NC='\033[0m' # No Color
+
+echo ""
+echo -e "${BOLD}${MAGENTA}Claude Orchestrator${NC}"
+echo -e "${DIM}Multi-agent workflow for Claude Code${NC}"
+echo ""
 
 # Create .claude directory structure
 mkdir -p .claude/commands
 mkdir -p .claude/agents
 
 # Download commands
+echo -e "${BOLD}Commands${NC}"
 COMMANDS=(
   "orchestrate"
   "poc"
@@ -20,15 +35,31 @@ COMMANDS=(
 )
 
 for cmd in "${COMMANDS[@]}"; do
-  echo "  → Downloading .claude/commands/${cmd}.md"
+  echo -e "  ${CYAN}→${NC} ${cmd}.md"
   curl -sL "$REPO_RAW/.claude/commands/${cmd}.md" -o ".claude/commands/${cmd}.md"
 done
 
 # Download CLAUDE.md template (project-specific instructions)
-echo "  → Downloading CLAUDE.md"
+echo ""
+echo -e "${BOLD}Config${NC}"
+echo -e "  ${CYAN}→${NC} CLAUDE.md"
 curl -sL "$REPO_RAW/CLAUDE.md" -o CLAUDE.md
 
 # Download agent files
+echo ""
+echo -e "${BOLD}Agents${NC}"
+
+# Agent colors for visual distinction
+declare -A AGENT_COLORS=(
+  ["architect"]="${BLUE}"
+  ["auditor"]="${RED}"
+  ["context-manager"]="${YELLOW}"
+  ["implementer"]="${GREEN}"
+  ["spec-writer"]="${MAGENTA}"
+  ["test-runner"]="${CYAN}"
+  ["test-writer"]="${CYAN}"
+)
+
 AGENTS=(
   "architect"
   "auditor"
@@ -40,25 +71,19 @@ AGENTS=(
 )
 
 for agent in "${AGENTS[@]}"; do
-  echo "  → Downloading .claude/agents/${agent}.md"
+  color="${AGENT_COLORS[$agent]}"
+  echo -e "  ${color}→${NC} ${agent}.md"
   curl -sL "$REPO_RAW/.claude/agents/${agent}.md" -o ".claude/agents/${agent}.md"
 done
 
 echo ""
-echo "✓ Claude Orchestrator installed successfully!"
+echo -e "${GREEN}${BOLD}✓ Installed successfully${NC}"
 echo ""
-echo "Files added:"
-echo "  - CLAUDE.md (project-specific template)"
-echo "  - .claude/commands/*.md (3 commands)"
-echo "  - .claude/agents/*.md (7 agent configs)"
+echo -e "${DIM}Files added:${NC}"
+echo -e "  ${DIM}CLAUDE.md, .claude/commands/*, .claude/agents/*${NC}"
 echo ""
-echo "Commands:"
-echo "  /orchestrate <task>  - Full workflow with audits"
-echo "  /poc <task>          - Rapid prototyping (skip audits/tests)"
-echo "  /graduate <slug>     - Promote POC to production"
-echo ""
-echo "Examples:"
-echo "  /orchestrate add user authentication"
-echo "  /poc experiment with Redis caching"
-echo "  /graduate redis-caching"
+echo -e "${BOLD}Usage${NC}"
+echo -e "  ${CYAN}/orchestrate${NC} <task>  ${DIM}Full workflow with audits${NC}"
+echo -e "  ${GREEN}/poc${NC} <task>          ${DIM}Rapid prototyping${NC}"
+echo -e "  ${YELLOW}/graduate${NC} <slug>     ${DIM}Promote POC to production${NC}"
 echo ""
