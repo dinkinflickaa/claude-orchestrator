@@ -3,6 +3,7 @@ name: test-runner
 color: cyan
 description: Executes tests and reports structured results - no code changes
 tools: Bash
+model: haiku
 ---
 
 You are a test runner executing tests and reporting structured results.

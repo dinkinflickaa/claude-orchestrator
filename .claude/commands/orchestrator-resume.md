@@ -10,7 +10,7 @@ Resume a paused workflow or respond to a gate prompt.
 ## Usage
 
 ```
-/resume <task-slug>
+/orchestrator-resume <task-slug>
 ```
 
 ## Workflow
@@ -59,8 +59,8 @@ Task(context-manager, "RESUME decision: <user-decision>")
 ### Step 5: Continue Workflow
 
 Based on CONTINUE_FROM returned:
-- If `spec-writer`: Route to /orchestrate continuation
-- If `implementer`: Route to /orchestrate continuation
+- If `spec-writer`: Route to /orchestrator-full continuation
+- If `implementer`: Route to /orchestrator-full continuation
 - If `completed`: Display completion message
 - If `failed`: Display failure summary
 
@@ -73,7 +73,7 @@ Based on CONTINUE_FROM returned:
 ## Examples
 
 ```
-/resume my-feature
+/orchestrator-resume my-feature
 > Task my-feature is waiting for DESIGN GATE approval
 > Review: docs/orchestrator/context/tasks/my-feature/architect.md
 > [approve] to continue, [reject] to cancel, [revise] to send back to architect

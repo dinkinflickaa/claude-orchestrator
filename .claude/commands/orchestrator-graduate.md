@@ -1,4 +1,4 @@
-# /graduate - Graduate POC to Production
+# /orchestrator-graduate - Graduate POC to Production
 
 ## Description
 
@@ -7,18 +7,18 @@ Promote a proof-of-concept implementation to production quality by adding tests,
 ## Usage
 
 ```
-/graduate <task-slug>
+/orchestrator-graduate <task-slug>
 ```
 
 ## Example
 
 ```
-/graduate redis-caching-layer
+/orchestrator-graduate redis-caching-layer
 ```
 
 ## What This Command Does
 
-The `/graduate` command completes the full workflow for a POC task:
+The `/orchestrator-graduate` command completes the full workflow for a POC task:
 
 ### Workflow Steps
 
@@ -42,7 +42,7 @@ Before graduation begins, the system validates:
 | Failure Type | Action |
 |--------------|--------|
 | POC not found | Error: "Task <slug> not found or not a POC task" |
-| POC incomplete | Error: "POC implementation not complete, run /poc first" |
+| POC incomplete | Error: "POC implementation not complete, run /orchestrator-lite first" |
 | Tests fail | Feedback loop: Test Runner → Implementer (fix) → Re-test (max 2 iterations) |
 | Audit fails | Feedback loop: Impl Audit → Implementer (fix) → Re-audit (max 2 iterations) |
 | Max iterations | Escalate to user with accumulated issues |
@@ -66,7 +66,7 @@ Graduation adds the **skipped phases** from POC:
 
 ## When to Use Graduate
 
-Use `/graduate` when:
+Use `/orchestrator-graduate` when:
 - POC has been validated and approved
 - Feature is ready for production deployment
 - You need full test coverage and audit sign-off

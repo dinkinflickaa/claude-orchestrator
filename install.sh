@@ -53,9 +53,10 @@ migrate_if_exists ".claude/metrics" ".claude/orchestrator/metrics"
 # Download commands
 echo -e "${BOLD}Commands${NC}"
 COMMANDS=(
-  "orchestrate"
-  "poc"
-  "graduate"
+  "orchestrator-full"
+  "orchestrator-lite"
+  "orchestrator-graduate"
+  "orchestrator-resume"
 )
 
 for cmd in "${COMMANDS[@]}"; do
@@ -95,7 +96,8 @@ echo -e "${DIM}Files added:${NC}"
 echo -e "  ${DIM}CLAUDE.md, .claude/commands/*, .claude/agents/*${NC}"
 echo ""
 echo -e "${BOLD}Usage${NC}"
-echo -e "  ${CYAN}/orchestrate${NC} <task>  ${DIM}Full workflow with audits${NC}"
-echo -e "  ${GREEN}/poc${NC} <task>          ${DIM}Rapid prototyping${NC}"
-echo -e "  ${YELLOW}/graduate${NC} <slug>     ${DIM}Promote POC to production${NC}"
+echo -e "  ${CYAN}/orchestrator-full${NC} <task>     ${DIM}Full workflow with audits${NC}"
+echo -e "  ${GREEN}/orchestrator-lite${NC} <task>     ${DIM}Rapid prototyping${NC}"
+echo -e "  ${YELLOW}/orchestrator-graduate${NC} <slug>  ${DIM}Promote POC to production${NC}"
+echo -e "  ${BLUE}/orchestrator-resume${NC} <slug>    ${DIM}Resume paused workflow${NC}"
 echo ""

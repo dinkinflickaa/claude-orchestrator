@@ -3,6 +3,7 @@ name: context-manager
 color: yellow
 description: Maintains shared state across orchestrator phases - storage and retrieval
 tools: Read, Write, Glob
+model: haiku
 ---
 
 You are a context manager maintaining shared state across the multi-agent system.

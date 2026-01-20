@@ -10,19 +10,19 @@ curl -sL https://raw.githubusercontent.com/dinkinflickaa/claude-orchestrator/mai
 
 ## Commands
 
-### `/orchestrate` - Full Workflow
+### `/orchestrator-full` - Full Workflow
 
 Complete workflow with design audits, specs, tests, and implementation audits.
 
 ```bash
-/orchestrate <task description>
+/orchestrator-full <task description>
 ```
 
 **Examples:**
 ```bash
-/orchestrate add user authentication
-/orchestrate fix the checkout bug
-/orchestrate refactor the API layer
+/orchestrator-full add user authentication
+/orchestrator-full fix the checkout bug
+/orchestrator-full refactor the API layer
 ```
 
 **Workflow:**
@@ -30,19 +30,19 @@ Complete workflow with design audits, specs, tests, and implementation audits.
 Architect → Design Audit → Spec → [Implementer + Test Writer] → Test Runner → Impl Audit
 ```
 
-### `/poc` - Rapid Prototyping
+### `/orchestrator-lite` - Rapid Prototyping
 
 Fast-track for experimental features. Skips audits, specs, and tests.
 
 ```bash
-/poc <task description>
+/orchestrator-lite <task description>
 ```
 
 **Examples:**
 ```bash
-/poc experiment with Redis caching
-/poc try GraphQL subscriptions
-/poc spike out the new UI component
+/orchestrator-lite experiment with Redis caching
+/orchestrator-lite try GraphQL subscriptions
+/orchestrator-lite spike out the new UI component
 ```
 
 **Workflow:**
@@ -52,18 +52,18 @@ Architect → Implementer → Store Debt
 
 **What gets skipped:** Design audit, spec writer, test writer, test runner, implementation audit
 
-### `/graduate` - Promote POC to Production
+### `/orchestrator-graduate` - Promote POC to Production
 
 Add tests and audits to a validated POC.
 
 ```bash
-/graduate <task-slug>
+/orchestrator-graduate <task-slug>
 ```
 
 **Examples:**
 ```bash
-/graduate redis-caching
-/graduate graphql-subscriptions
+/orchestrator-graduate redis-caching
+/orchestrator-graduate graphql-subscriptions
 ```
 
 **Workflow:**
@@ -78,9 +78,10 @@ your-project/
 ├── CLAUDE.md                      # Your project-specific instructions (edit this)
 └── .claude/
     ├── commands/
-    │   ├── orchestrate.md         # /orchestrate command
-    │   ├── poc.md                 # /poc command
-    │   └── graduate.md            # /graduate command
+    │   ├── orchestrator-full.md         # /orchestrator-full command
+    │   ├── orchestrator-lite.md         # /orchestrator-lite command
+    │   ├── orchestrator-graduate.md     # /orchestrator-graduate command
+    │   └── orchestrator-resume.md       # /orchestrator-resume command
     └── agents/
         ├── architect.md
         ├── auditor.md
@@ -134,7 +135,7 @@ docs/orchestrator/
 ```
 in-progress → poc-complete → graduated
      ↑              ↑             ↑
-   /poc         STORE debt    /graduate
+/orchestrator-lite  STORE debt  /orchestrator-graduate
 ```
 
 ## Why Command-Based?

@@ -112,18 +112,6 @@ Architect -> Design Audit -(flaw)------+
 
 ---
 
-## Agents
-
-| Agent           | Purpose                        | Model  |
-| --------------- | ------------------------------ | ------ |
-| architect       | Design, patterns, SOLID        | opus   |
-| spec-writer     | Implementation spec            | haiku  |
-| implementer     | Write code                     | sonnet |
-| test-writer     | Write tests                    | haiku  |
-| test-runner     | Run tests                      | haiku  |
-| context-manager | Shared state                   | haiku  |
-| auditor         | Review design + implementation | opus   |
-
 ## Agent Output Format
 
 | Agent       | Required Sections                                         |
@@ -354,10 +342,10 @@ Recommendations:
 - <rec1>
 - <rec2>
 
-To continue: /resume <task-slug>
+To continue: /orchestrator-resume <task-slug>
 ```
 
-Do NOT escalate - pause and let user decide via /resume.
+Do NOT escalate - pause and let user decide via /orchestrator-resume.
 
 ---
 

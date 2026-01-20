@@ -1,0 +1,55 @@
+{
+  "name": "rename-orchestrator-commands",
+  "mode": "standard",
+  "workflow": "orchestrate",
+  "status": "running",
+  "current_phase": null,
+  "running_phases": [],
+  "completed_phases": [
+    {
+      "phase": "implementer",
+      "status": "success",
+      "started_at": "2026-01-20T00:00:00Z",
+      "ended_at": "2026-01-20T00:06:00Z",
+      "duration_ms": 360000,
+      "retries": 0
+    },
+    {
+      "phase": "impl-audit",
+      "status": "failed",
+      "started_at": "2026-01-20T00:06:00Z",
+      "ended_at": "2026-01-20T00:06:30Z",
+      "duration_ms": 30000,
+      "retries": 0
+    },
+    {
+      "phase": "implementer-fix",
+      "status": "success",
+      "started_at": "2026-01-20T00:07:00Z",
+      "ended_at": "2026-01-20T00:07:45Z",
+      "duration_ms": 45000,
+      "retries": 0
+    },
+    {
+      "phase": "impl-audit-2",
+      "status": "success",
+      "started_at": "2026-01-20T00:08:00Z",
+      "ended_at": "2026-01-20T00:09:15Z",
+      "duration_ms": 75000,
+      "retries": 0
+    }
+  ],
+  "failure_context": null,
+  "gate_context": null,
+  "metrics": {
+    "total_duration_ms": 510000,
+    "parallelization_savings_ms": null,
+    "total_retries": 1
+  },
+  "waves": {
+    "task_breakdown": null,
+    "execution": []
+  },
+  "created_at": "2026-01-20T00:00:00Z",
+  "updated_at": "2026-01-20T00:09:15Z"
+}

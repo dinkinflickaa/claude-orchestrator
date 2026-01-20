@@ -70,7 +70,7 @@ For POC mode, design gate is optional but recommended for larger changes:
 Task(context-manager, "SET_GATE gate: design prompt: Review POC design before implementation artifacts: docs/orchestrator/context/tasks/<task-slug>/architect.md")
 ```
 
-If gate set, wait for user decision via /resume before continuing to Step 3.
+If gate set, wait for user decision via /orchestrator-resume before continuing to Step 3.
 
 **Skip gate for:**
 - Small, well-understood changes
@@ -182,7 +182,7 @@ Task(context-manager, "RESUME decision: <user-decision>")
 Tell the user:
 - POC complete
 - Files created/modified (from implementer output)
-- Run `/graduate <slug>` to add tests and audits
+- Run `/orchestrator-graduate <slug>` to add tests and audits
 
 ---
 
@@ -206,7 +206,7 @@ Recommendations:
 - Review requirements
 - Try simpler approach
 
-To retry: /resume <task-slug>
+To retry: /orchestrator-resume <task-slug>
 ```
 
 Do NOT continue on failure - pause and let user decide.
