@@ -10,7 +10,7 @@ You are a test writer creating tests based on task specs. Runs parallel with imp
 
 ## Context You Receive
 
-From orchestrator: exact function signatures, type definitions, edge cases. Use the exact signatures provided - implementer uses them too.
+From orchestrator: function signatures, types, edge cases, testHints from architect.md taskBreakdown. Use the exact signatures provided - implementer uses them too.
 
 ## Process
 

@@ -34,12 +34,12 @@ Task(context-manager, "INIT task: <task-name> mode: standard workflow: orchestra
 
 ## Step 3: Follow Routing Table
 
-| Classification | Route                                                                                                  |
-| -------------- | ------------------------------------------------------------------------------------------------------ |
-| Simple bug     | Implementer + Test Writer -> Test Runner -> Impl Audit                                                 |
-| Complex bug    | Architect -> Design Audit -> Spec -> Implementer + Test Writer -> Test Runner -> Impl Audit            |
-| New feature    | Architect -> Design Audit -> Spec -> Implementer + Test Writer -> Test Runner -> Impl Audit            |
-| Design flaw    | Architect (redesign) -> Design Audit -> Spec -> Implementer + Test Writer -> Test Runner -> Impl Audit |
+| Classification | Route                                                                                           |
+| -------------- | ----------------------------------------------------------------------------------------------- |
+| Simple bug     | Implementer + Test Writer -> Test Runner -> Impl Audit                                         |
+| Complex bug    | Architect -> Design Audit -> Implementer + Test Writer -> Test Runner -> Impl Audit            |
+| New feature    | Architect -> Design Audit -> Implementer + Test Writer -> Test Runner -> Impl Audit            |
+| Design flaw    | Architect (redesign) -> Design Audit -> Implementer + Test Writer -> Test Runner -> Impl Audit |
 
 ---
 
@@ -69,23 +69,23 @@ Architect -> Design Audit -(flaw)------+
              (full)          (lite)          (shelf)        (cancel)
                 |               |               |               |
                 v               v               v               v
-           Spec Writer     Switch POC      Save & Exit      Exit
+    [Implementer + Test Writer] Switch POC  Save & Exit      Exit
                 |
                 v
-    [Implementer + Test Writer] -> Test Runner -> Implementation Audit
-                                                            |
-                                                        (pass)
-                                                            v
-                                                    [FINAL GATE] -> (approve) -> Complete
-                                                            |
-                                                        (reject/revise)
-                                                            v
-                                                        fail/loop
+        Test Runner -> Implementation Audit
+                |
+            (pass)
+                v
+        [FINAL GATE] -> (approve) -> Complete
+                |
+            (reject/revise)
+                v
+            fail/loop
 ```
 
 **Two-Stage Audit:**
 
-1. **Design Audit** (early): Catches architecture issues BEFORE spec/implementation
+1. **Design Audit** (early): Catches architecture issues BEFORE implementation
 2. **Implementation Audit** (late): Catches code issues AFTER tests run
 
 **Feedback Loops:**
@@ -101,7 +101,6 @@ Architect -> Design Audit -(flaw)------+
 | Agent       | Required Sections                                         |
 | ----------- | --------------------------------------------------------- |
 | architect   | Design Decisions, Interfaces, Constraints, Files Affected |
-| spec-writer | Implementation Tasks (File, Signatures, Dependencies)     |
 | implementer | Files Modified, Public API, Edge Cases, Notes for Testing |
 | test-writer | Test Files, Coverage Areas, Run Command                   |
 | auditor     | Verdict, Issues (Location, Description, Suggested Fix)    |
@@ -110,7 +109,7 @@ Architect -> Design Audit -(flaw)------+
 
 ## Phase 2: Design Audit
 
-After architect, BEFORE spec writer:
+After architect, BEFORE implementation:
 
 ```
 Task(context-manager, "BEGIN_PHASE phase: design-audit needs: architect-output")
@@ -134,8 +133,8 @@ Task(context-manager, "SET_GATE gate: investigation prompt: Investigation comple
 
 Present investigation summary with 4 options:
 
-- `full`: Continue with full workflow (spec, tests, audits)
-- `lite`: Switch to POC mode (implementer only, skip spec/tests/audits)
+- `full`: Continue with full workflow (tests, audits)
+- `lite`: Switch to POC mode (implementer only, skip tests/audits)
 - `shelf`: Save investigation and exit (resume later)
 - `cancel`: Mark task as cancelled and exit
 
@@ -148,7 +147,7 @@ Task(context-manager, "RESUME decision: <user-decision>")
 If decision is `full`:
 
 ```
-# Continue to Spec Writer phase (existing flow)
+# Continue to Implementation phase (existing flow)
 ```
 
 If decision is `lite`:
@@ -157,7 +156,7 @@ If decision is `lite`:
 Output: "Switching to POC mode..."
 Task(context-manager, "RESUME decision: lite")
 # Context-manager switches workflow to POC
-# Continue to implementer only (skip spec, tests, audits)
+# Continue to implementer only (skip tests, audits)
 ```
 
 If decision is `shelf`:
@@ -180,7 +179,7 @@ Task marked as cancelled.
 
 ### Wave Execution
 
-After spec-writer completes, execute implementation in waves:
+After design audit passes and checkpoint approved, execute implementation in waves:
 
 #### Compute Waves from Task Breakdown
 
@@ -194,11 +193,11 @@ Parse `taskBreakdown` from architect output and group tasks by dependency level:
 For each wave (in order):
 
 ```
-Task(context-manager, "BEGIN_PHASE phase: implementer:task-<id> needs: spec-signatures")
+Task(context-manager, "BEGIN_PHASE phase: implementer:task-<id> needs: architect-signatures")
 Task(implementer, "IMPLEMENT: task <id> - <description>")
 Task(context-manager, "COMPLETE_PHASE phase: implementer:task-<id> status: success content: <output>")
 
-Task(context-manager, "BEGIN_PHASE phase: test-writer:task-<id> needs: spec-signatures")
+Task(context-manager, "BEGIN_PHASE phase: test-writer:task-<id> needs: architect-signatures")
 Task(test-writer, "WRITE TESTS: task <id> - <description>")
 Task(context-manager, "COMPLETE_PHASE phase: test-writer:task-<id> status: success content: <output>")
 ```
@@ -250,7 +249,7 @@ Task(context-manager, "COMPLETE_PHASE phase: impl-audit status: <success|failed>
 After implementation audit passes, set gate for final approval:
 
 ```
-Task(context-manager, "SET_GATE gate: final prompt: Review implementation before marking complete artifacts: docs/orchestrator/context/tasks/<task-slug>/spec.md,docs/orchestrator/context/tasks/<task-slug>/impl-audit.md,docs/orchestrator/context/tasks/<task-slug>/test-results.md")
+Task(context-manager, "SET_GATE gate: final prompt: Review implementation before marking complete artifacts: docs/orchestrator/context/tasks/<task-slug>/impl-audit.md,docs/orchestrator/context/tasks/<task-slug>/test-results.md")
 ```
 
 **Gate Response:**
@@ -365,9 +364,8 @@ Run `LIST` before `INIT` to avoid duplicate tasks.
 | -------------------- | ---------------------------------------- |
 | Architect            | `memory`                                 |
 | Design Audit         | `architect-output`                       |
-| Spec Writer          | `architect-output`                       |
-| Implementer          | `spec-signatures`                        |
-| Test Writer          | `spec-signatures`                        |
+| Implementer          | `architect-signatures`                   |
+| Test Writer          | `architect-signatures`                   |
 | Implementation Audit | `all`                                    |
 | Architect (revision) | `design-audit-feedback,architect-output` |
 | Implementer (fix)    | `impl-audit-feedback,implementation`     |

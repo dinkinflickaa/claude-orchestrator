@@ -104,17 +104,16 @@ Task(context-manager, "RESUME decision: <user-decision>")
 ### Step 5: Continue Workflow
 
 Based on CONTINUE_FROM and decision type:
-- If gate: investigation and decision: full -> Route to spec-writer phase
+- If gate: investigation and decision: full -> Route to implementer phase
 - If gate: investigation and decision: lite -> Route to implementer phase (POC mode)
 - If gate: investigation and decision: shelf -> Task shelved, exit
 - If gate: investigation and decision: cancel -> Task cancelled, exit
-- If status: shelved and decision: full -> Route to spec-writer phase
+- If status: shelved and decision: full -> Route to implementer phase
 - If status: shelved and decision: lite -> Route to implementer phase (POC mode)
 - If status: shelved and decision: cancel -> Task cancelled, exit
 - If gate: design and decision: approve -> Route to next phase
 - If gate: final and decision: approve -> Mark completed
 - If status: paused and decision: retry -> Route to failure point
-- If `spec-writer`: Route to /orchestrator-full continuation
 - If `implementer`: Route to /orchestrator-full continuation
 - If `completed`: Display completion message
 - If `failed`: Display failure summary
@@ -138,7 +137,7 @@ Based on CONTINUE_FROM and decision type:
 > [approve] to continue, [reject] to cancel, [revise] to send back to architect
 
 User: approve
-> Resuming... continuing to spec-writer phase
+> Resuming... continuing to implementer phase
 ```
 
 ### Investigation Checkpoint Example
@@ -180,7 +179,7 @@ User: lite
 > Options: [full] [lite] [cancel]
 
 User: full
-> Resuming with full specification workflow... continuing to spec-writer
+> Resuming with full specification workflow... continuing to implementer
 ```
 
 ### Cancelled Task Example

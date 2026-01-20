@@ -44,10 +44,35 @@ Context: <auditor-issues>
   "placement": { "newFiles": [...], "modifiedFiles": [...] },
   "patterns": { "required": [...], "examples": [...] },
   "constraints": [...],
+  "types": [
+    { "name": "TypeName", "definition": "full type definition", "location": "file path" }
+  ],
   "taskBreakdown": {
     "tasks": [
-      { "id": 1, "name": "Task name", "files": ["src/file.ts"], "dependencies": [], "description": "..." },
-      { "id": 2, "name": "Dependent task", "files": ["src/other.ts"], "dependencies": [1], "description": "..." }
+      {
+        "id": 1,
+        "name": "Task name",
+        "files": ["src/file.ts"],
+        "dependencies": [],
+        "description": "...",
+        "signatures": [
+          { "name": "functionName", "signature": "full signature", "returns": "return description", "file": "target file" }
+        ],
+        "edgeCases": [
+          { "condition": "null input", "behavior": "return empty array" }
+        ],
+        "testHints": ["test with empty config", "verify error handling"]
+      },
+      {
+        "id": 2,
+        "name": "Dependent task",
+        "files": ["src/other.ts"],
+        "dependencies": [1],
+        "description": "...",
+        "signatures": [],
+        "edgeCases": [],
+        "testHints": []
+      }
     ]
   }
 }

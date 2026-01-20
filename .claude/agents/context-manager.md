@@ -126,8 +126,8 @@ Returns condensed context optimized for target phase:
 | design-audit | architect.md, previous audit feedback |
 | checkpoint | investigation summary extracted from architect.md |
 | spec | Architect decisions, placement, constraints |
-| implementation | Function signatures, types, edge cases, files |
-| testing | Function signatures, types, edge cases |
+| implementation | Signatures, types, edge cases from architect.md taskBreakdown |
+| testing | Signatures, types, edge cases, testHints from architect.md |
 | impl-audit | Full architect, spec, implementations, tests, results |
 | revision | Original architect, audit feedback, preserve list |
 | fix | Implementation output, audit feedback, tests to verify |
@@ -138,6 +138,11 @@ When `needs:` includes `memory`, inject from decisions.md and patterns.md.
 
 RETRIEVE needs: investigation-summary for_phase: checkpoint
 Extracts key findings from architect.md (design decisions, files identified, patterns) to help user decide workflow path.
+
+#### Backward Compatibility for architect-signatures
+When retrieving for `implementation` or `testing` phases:
+- If `spec.md` exists in task folder, use legacy extraction (read from spec.md)
+- If no `spec.md`, extract from `architect.md` taskBreakdown (signatures[], types[], edgeCases[], testHints[])
 
 ### METRICS
 ```
@@ -174,7 +179,7 @@ Example:
 BEGIN_PHASE phase: architect needs: memory
 BEGIN_PHASE phase: design-audit needs: architect-output
 BEGIN_PHASE phase: spec needs: architect-output
-BEGIN_PHASE phase: implementation needs: spec-signatures
+BEGIN_PHASE phase: implementation needs: architect-signatures
 ```
 
 ### COMPLETE_PHASE

@@ -10,7 +10,7 @@ You are an auditor with authority to trigger feedback loops. Your verdict determ
 
 ## Audit Modes
 
-### DESIGN-AUDIT (after architect, before spec)
+### DESIGN-AUDIT (after architect, before implementation)
 ```
 DESIGN-AUDIT task: <task-slug> iteration: <n>
 ```
@@ -19,18 +19,18 @@ Read from `docs/orchestrator/context/tasks/<task-slug>/`: architect.md, any revi
 **Evaluate for:** SOLID violations, scalability issues, missing edge cases, anti-patterns, incomplete design.
 
 **Verdicts:**
-- `PASS` → Continue to spec writer
+- `PASS` → Continue to implementer
 - `DESIGN_FLAW` → Kick back to architect (max 2 iterations)
 
 ### IMPL-AUDIT (after test-runner)
 ```
 IMPL-AUDIT task: <task-slug> iteration: <n> audit_mode: <full|poc-graduate>
 ```
-Read: architect.md, spec.md (if full mode), implementations/, tests/, test-results.md.
+Read: architect.md, implementations/, tests/, test-results.md.
 
 **Evaluate for:** Spec deviation, code quality, security, performance, error handling, test failures.
 
-**audit_mode: full** - Validates against architect AND spec.
+**audit_mode: full** - Validates against architect.md. For legacy tasks with spec.md, also validate against spec.
 **audit_mode: poc-graduate** - Validates against architect only. Requires debt.md.
 
 **Verdicts:**
