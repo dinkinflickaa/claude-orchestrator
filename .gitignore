@@ -39,4 +39,8 @@ coverage/
 # Temporary files
 tmp/
 temp/
-docs/orchestrator/
+
+# Orchestrator working state (avoid merge conflicts)
+# Task artifacts are committed for PR visibility
+docs/orchestrator/context/current-task.md
+docs/orchestrator/context/history.md
