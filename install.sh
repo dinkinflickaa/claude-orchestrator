@@ -105,21 +105,29 @@ curl -sL "$REPO_RAW/mcp-server/index.js" -o ".claude/mcp-server/index.js"
 echo -e "  ${CYAN}→${NC} Installing dependencies..."
 (cd .claude/mcp-server && npm install --silent 2>/dev/null)
 
+# Create .mcp.json for MCP server registration
+echo ""
+echo -e "${BOLD}MCP Config${NC}"
+echo -e "  ${CYAN}→${NC} .mcp.json"
+cat > .mcp.json << 'MCPEOF'
+{
+  "mcpServers": {
+    "orchestrator": {
+      "command": "node",
+      "args": [".claude/mcp-server/index.js"]
+    }
+  }
+}
+MCPEOF
+
 echo ""
 echo -e "${GREEN}${BOLD}✓ Installed successfully${NC}"
 echo ""
 echo -e "${DIM}Files added:${NC}"
-echo -e "  ${DIM}CLAUDE.md, .claude/commands/*, .claude/agents/*, .claude/mcp-server/*${NC}"
+echo -e "  ${DIM}CLAUDE.md, .claude/commands/*, .claude/agents/*, .claude/mcp-server/*, .mcp.json${NC}"
 echo ""
-echo -e "${BOLD}${YELLOW}⚠ Configure MCP Server${NC}"
-echo -e "Add to your Claude Code settings (~/.claude/settings.json):"
-echo ""
-echo -e '  "mcpServers": {'
-echo -e '    "orchestrator": {'
-echo -e '      "command": "node",'
-echo -e '      "args": ["'$(pwd)'/.claude/mcp-server/index.js"]'
-echo -e '    }'
-echo -e '  }'
+echo -e "${BOLD}${YELLOW}⚠ Restart Claude Code${NC}"
+echo -e "Restart Claude Code and approve the 'orchestrator' MCP server when prompted."
 echo ""
 echo -e "${BOLD}Usage${NC}"
 echo -e "  ${CYAN}/orchestrator-full${NC} <task>     ${DIM}Full workflow with audits${NC}"

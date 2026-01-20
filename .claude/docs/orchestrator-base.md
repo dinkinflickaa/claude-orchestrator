@@ -8,18 +8,18 @@ Shared rules and patterns for all orchestrator commands. Read this file complete
 
 If MCP tools are NOT available, stop and tell the user:
 ```
-MCP server not configured. Add to ~/.claude/settings.json:
+MCP server not configured. Ensure .mcp.json exists in project root:
 
 {
   "mcpServers": {
     "orchestrator": {
       "command": "node",
-      "args": ["<project-path>/.claude/mcp-server/index.js"]
+      "args": [".claude/mcp-server/index.js"]
     }
   }
 }
 
-Then restart Claude Code.
+Then restart Claude Code and approve the MCP server when prompted.
 ```
 
 ## Identity

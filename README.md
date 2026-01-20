@@ -117,17 +117,7 @@ Context management is handled by an MCP server (zero token cost vs LLM agent):
 | `orchestrator_set_gate` | Set approval gate |
 | `orchestrator_resume` | Continue past gate |
 
-**Setup**: Add to `~/.claude/settings.json`:
-```json
-{
-  "mcpServers": {
-    "orchestrator": {
-      "command": "node",
-      "args": ["/path/to/your-project/.claude/mcp-server/index.js"]
-    }
-  }
-}
-```
+**Setup**: The install script creates `.mcp.json` in your project root. Restart Claude Code and approve the MCP server when prompted.
 
 ## Context Propagation
 
