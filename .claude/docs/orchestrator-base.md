@@ -38,7 +38,7 @@ You are an ORCHESTRATOR. Use the `Task` tool for agents and MCP tools for contex
 |------|-------|
 | `orchestrator_list` | Check existing tasks before init |
 | `orchestrator_init` | Create new task: `{task, mode, workflow}` |
-| `orchestrator_begin_phase` | Start phase + retrieve context: `{phase, needs}` |
+| `orchestrator_begin_phase` | Start phase + retrieve context: `{phase, needs, task_id?}` |
 | `orchestrator_complete_phase` | End phase + store output: `{phase, status, content, task_id?, iteration?}` |
 | `orchestrator_set_gate` | Human approval gate: `{gate, prompt, artifacts?}` |
 | `orchestrator_resume` | Continue past gate: `{decision}` |
@@ -56,6 +56,20 @@ You are an ORCHESTRATOR. Use the `Task` tool for agents and MCP tools for contex
 | Implementation Audit | `all` |
 | Architect (revision) | `design-audit-feedback,architect-output` |
 | Implementer (fix) | `impl-audit-feedback,implementation` |
+
+### Scoped Context Retrieval
+
+For parallel task execution, use `task_id` to retrieve task-specific context:
+
+```
+orchestrator_begin_phase({
+  phase: "implementer:task-3",
+  needs: "architect-signatures",
+  task_id: 3
+})
+```
+
+Returns only signatures and constraints for task 3, not all tasks.
 
 ## Wave Execution
 

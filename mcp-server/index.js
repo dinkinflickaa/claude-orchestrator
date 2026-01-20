@@ -105,6 +105,81 @@ function extractArchitectSignatures(architectContent) {
 }
 
 // Tool implementations
+function extractScopedTaskContext(architectContent, taskId) {
+  // Try to parse JSON from architect output
+  const jsonMatch = architectContent.match(/```json\s*([\s\S]*?)\s*```/);
+  if (!jsonMatch) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(jsonMatch[1]);
+
+    // Validate structure - taskBreakdown can be array directly or object with tasks property
+    let tasks = [];
+    if (Array.isArray(parsed.taskBreakdown)) {
+      tasks = parsed.taskBreakdown;
+    } else if (parsed.taskBreakdown && Array.isArray(parsed.taskBreakdown.tasks)) {
+      tasks = parsed.taskBreakdown.tasks;
+    } else {
+      return null;
+    }
+
+    // Find the task with matching id - support both 'id' and 'task_id' properties
+    const task = tasks.find(t => t.id === taskId || t.task_id === taskId);
+    if (!task) {
+      return null;
+    }
+
+    // Collect dependency signatures (depth 1 only)
+    const dependencySignatures = [];
+    if (Array.isArray(task.dependencies) && task.dependencies.length > 0) {
+      for (const depIdentifier of task.dependencies) {
+        // Dependencies can be numeric IDs or string identifiers like "task-2"
+        const depId = typeof depIdentifier === 'string' ? 
+          parseInt(depIdentifier.replace('task-', '')) : 
+          depIdentifier;
+        
+        const depTask = tasks.find(t => t.id === depId || t.task_id === depId);
+        // Include the dependency task
+        if (depTask) {
+          // If the task has signatures property, include them; otherwise include the whole task
+          if (Array.isArray(depTask.signatures)) {
+            for (const sig of depTask.signatures) {
+              dependencySignatures.push({
+                taskId: depId,
+                taskName: depTask.name,
+                ...sig
+              });
+            }
+          } else {
+            // No signatures property, so include the whole task as a dependency signature
+            dependencySignatures.push(depTask);
+          }
+        }
+      }
+    }
+
+    // Build global context
+    const globalContext = {
+      designDecisions: parsed.designDecisions || [],
+      placement: parsed.placement || {},
+      patterns: parsed.patterns || {},
+      constraints: parsed.constraints || [],
+      types: parsed.types || []
+    };
+
+    return {
+      task,
+      dependencySignatures,
+      globalContext
+    };
+  } catch (e) {
+    // JSON parsing failed
+    return null;
+  }
+}
+
 const tools = {
   // LIST - List all tasks
   orchestrator_list: async () => {
@@ -178,7 +253,7 @@ const tools = {
   },
 
   // BEGIN_PHASE - Retrieve context and start phase
-  orchestrator_begin_phase: async ({ phase, needs }) => {
+  orchestrator_begin_phase: async ({ phase, needs, task_id }) => {
     const slug = getCurrentTask();
     if (!slug) return { error: "No current task", status: "error" };
 
@@ -197,7 +272,7 @@ const tools = {
     writeJson(manifestPath, manifest);
 
     // Retrieve context based on needs
-    const context = await retrieveContext(slug, needs, phase);
+    const context = await retrieveContext(slug, needs, phase, task_id);
 
     return { status: "success", task: slug, phase, context };
   },
@@ -405,11 +480,11 @@ const tools = {
   },
 
   // RETRIEVE - Retrieve context
-  orchestrator_retrieve: async ({ needs, for_phase, task }) => {
+  orchestrator_retrieve: async ({ needs, for_phase, task, task_id }) => {
     const slug = task || getCurrentTask();
     if (!slug) return { error: "No current task", status: "error" };
 
-    const context = await retrieveContext(slug, needs, for_phase);
+    const context = await retrieveContext(slug, needs, for_phase, task_id);
     return { status: "success", task: slug, context };
   }
 };
@@ -463,7 +538,7 @@ async function storeContent(slug, phase, content, taskId, iteration) {
 }
 
 // Helper: Retrieve context based on needs
-async function retrieveContext(slug, needs, forPhase) {
+async function retrieveContext(slug, needs, forPhase, taskId) {
   const taskDir = getTaskDir(slug);
   const context = {};
 
@@ -496,9 +571,24 @@ async function retrieveContext(slug, needs, forPhase) {
       // Extract from architect
       const architectContent = readText(`${taskDir}/architect.md`);
       if (architectContent) {
-        const breakdown = extractArchitectSignatures(architectContent);
-        if (breakdown) {
-          context.task_breakdown = breakdown;
+        // If taskId is provided, extract scoped context
+        if (taskId) {
+          const scopedContext = extractScopedTaskContext(architectContent, taskId);
+          if (scopedContext) {
+            context.scoped_task_context = scopedContext;
+          } else {
+            // Fall back to full breakdown if scoping fails
+            const breakdown = extractArchitectSignatures(architectContent);
+            if (breakdown) {
+              context.task_breakdown = breakdown;
+            }
+          }
+        } else {
+          // No taskId provided, use full breakdown
+          const breakdown = extractArchitectSignatures(architectContent);
+          if (breakdown) {
+            context.task_breakdown = breakdown;
+          }
         }
         context.architect = architectContent;
       }
@@ -619,7 +709,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         type: "object",
         properties: {
           phase: { type: "string", description: "Phase name (architect, design-audit, implementer, test-writer, test-runner, impl-audit)" },
-          needs: { type: "string", description: "What context to retrieve (memory, architect-output, architect-signatures, all)" }
+          needs: { type: "string", description: "What context to retrieve (memory, architect-output, architect-signatures, all)" },
+          task_id: { type: "number", description: "Task ID for scoped context retrieval (for implementer/test-writer phases)" }
         },
         required: ["phase", "needs"]
       }
@@ -707,7 +798,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         properties: {
           needs: { type: "string", description: "What to retrieve" },
           for_phase: { type: "string", description: "Target phase" },
-          task: { type: "string", description: "Task slug (defaults to current)" }
+          task: { type: "string", description: "Task slug (defaults to current)" },
+          task_id: { type: "number", description: "Task ID for scoped context retrieval" }
         },
         required: ["needs", "for_phase"]
       }
@@ -734,3 +826,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 // Start server
 const transport = new StdioServerTransport();
 await server.connect(transport);
+
+// Export for testing
+export { extractScopedTaskContext };

@@ -1,0 +1,122 @@
+{
+  "name": "scoped-task-context",
+  "mode": "standard",
+  "workflow": "orchestrate",
+  "status": "completed",
+  "current_phase": null,
+  "running_phases": [],
+  "completed_phases": [
+    {
+      "name": "architect",
+      "started_at": "2026-01-20T21:50:33.120Z",
+      "ended_at": "2026-01-20T21:52:06.017Z",
+      "status": "success",
+      "duration_ms": 92897
+    },
+    {
+      "name": "design-audit",
+      "started_at": "2026-01-20T21:52:10.197Z",
+      "ended_at": "2026-01-20T21:53:39.499Z",
+      "status": "success",
+      "duration_ms": 89302
+    },
+    {
+      "name": "implementer:task-1",
+      "started_at": "2026-01-20T22:00:59.662Z",
+      "ended_at": "2026-01-20T22:05:00.997Z",
+      "status": "success",
+      "duration_ms": 241335
+    },
+    {
+      "name": "test-writer:task-1",
+      "started_at": "2026-01-20T22:00:59.913Z",
+      "ended_at": "2026-01-20T22:05:01.216Z",
+      "status": "success",
+      "duration_ms": 241303
+    },
+    {
+      "name": "implementer:task-2",
+      "started_at": "2026-01-20T22:05:05.895Z",
+      "ended_at": "2026-01-20T22:09:37.870Z",
+      "status": "success",
+      "duration_ms": 271975
+    },
+    {
+      "name": "implementer:task-3",
+      "started_at": "2026-01-20T22:05:06.168Z",
+      "ended_at": "2026-01-20T22:09:38.084Z",
+      "status": "success",
+      "duration_ms": 271916
+    },
+    {
+      "name": "implementer:task-4",
+      "started_at": "2026-01-20T22:09:41.899Z",
+      "ended_at": "2026-01-20T22:10:29.531Z",
+      "status": "success",
+      "duration_ms": 47632
+    },
+    {
+      "name": "implementer:task-5",
+      "started_at": "2026-01-20T22:10:33.730Z",
+      "ended_at": "2026-01-20T22:12:43.687Z",
+      "status": "success",
+      "duration_ms": 129957
+    },
+    {
+      "name": "implementer:task-6",
+      "started_at": "2026-01-20T22:12:47.402Z",
+      "ended_at": "2026-01-20T22:13:27.334Z",
+      "status": "success",
+      "duration_ms": 39932
+    },
+    {
+      "name": "test-runner",
+      "started_at": "2026-01-20T22:13:31.362Z",
+      "ended_at": "2026-01-20T22:17:04.849Z",
+      "status": "success",
+      "duration_ms": 213487
+    },
+    {
+      "name": "impl-audit",
+      "started_at": "2026-01-20T22:17:08.556Z",
+      "ended_at": "2026-01-20T22:18:48.131Z",
+      "status": "failed",
+      "duration_ms": 99575
+    },
+    {
+      "name": "implementer:fix-1",
+      "started_at": "2026-01-20T22:18:53.688Z",
+      "ended_at": "2026-01-20T22:20:07.098Z",
+      "status": "success",
+      "duration_ms": 73410
+    },
+    {
+      "name": "test-runner-2",
+      "started_at": "2026-01-20T22:20:11.395Z",
+      "ended_at": "2026-01-20T22:20:25.746Z",
+      "status": "success",
+      "duration_ms": 14351
+    },
+    {
+      "name": "impl-audit-2",
+      "started_at": "2026-01-20T22:20:29.627Z",
+      "ended_at": "2026-01-20T22:21:58.015Z",
+      "status": "success",
+      "duration_ms": 88388
+    }
+  ],
+  "failure_context": null,
+  "gate_context": null,
+  "shelf_context": null,
+  "metrics": {
+    "total_duration_ms": null,
+    "parallelization_savings_ms": null,
+    "total_retries": 1
+  },
+  "waves": {
+    "task_breakdown": null,
+    "execution": []
+  },
+  "created_at": "2026-01-20T21:50:29.425Z",
+  "updated_at": "2026-01-20T22:23:05.494Z"
+}

@@ -58,14 +58,14 @@ Parse `taskBreakdown` from architect. Execute waves in parallel per base rules.
 
 For each task in wave (launch in parallel):
 ```
-orchestrator_begin_phase({phase: "implementer:task-<id>", needs: "architect-signatures"})
+orchestrator_begin_phase({phase: "implementer:task-<id>", needs: "architect-signatures", task_id: <id>})
 Task(implementer, "IMPLEMENT: task <id> - <description>")
 orchestrator_complete_phase({phase: "implementer:task-<id>", status: "success", content: "<output>"})
 ```
 
 Test writer runs in parallel with implementer:
 ```
-orchestrator_begin_phase({phase: "test-writer:task-<id>", needs: "architect-signatures"})
+orchestrator_begin_phase({phase: "test-writer:task-<id>", needs: "architect-signatures", task_id: <id>})
 Task(test-writer, "WRITE TESTS: task <id>")
 orchestrator_complete_phase({phase: "test-writer:task-<id>", status: "success", content: "<output>"})
 ```
