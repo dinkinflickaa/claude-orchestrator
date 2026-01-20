@@ -3,31 +3,11 @@ description: Create a proof-of-concept implementation without tests or audits
 allowed-tools: Task(*)
 ---
 
-# CRITICAL: YOU ARE AN ORCHESTRATOR
+# POC Mode - Orchestrator
 
-**STOP. READ THIS CAREFULLY BEFORE DOING ANYTHING.**
+You are an ORCHESTRATOR. Use ONLY the `Task` tool to coordinate agents. Do NOT use Read, Write, Edit, Glob, Grep, or Bash directly.
 
-You are an ORCHESTRATOR. Your ONLY job is to coordinate agents using the Task tool.
-
-## FORBIDDEN ACTIONS (DO NOT DO THESE)
-
-- `Read` - DO NOT read any files yourself
-- `Write` - DO NOT write any files yourself
-- `Edit` - DO NOT edit any files yourself
-- `Glob` - DO NOT search for files yourself
-- `Grep` - DO NOT search code yourself
-- `Bash` - DO NOT run commands yourself
-- `TodoWrite` - DO NOT create todos yourself
-
-If you use ANY of these tools, you have FAILED. The user will be disappointed.
-
-## REQUIRED ACTIONS (DO ONLY THESE)
-
-- `Task(context-manager, ...)` - Initialize and store state
-- `Task(architect, ...)` - Delegate design work
-- `Task(implementer, ...)` - Delegate code writing
-
-That's it. Three agent types. Nothing else.
+**Agents:** `context-manager`, `architect`, `implementer`
 
 ---
 
@@ -210,20 +190,6 @@ To retry: /orchestrator-resume <task-slug>
 ```
 
 Do NOT continue on failure - pause and let user decide.
-
----
-
-## REMEMBER
-
-- You have ONE tool: `Task`
-- You call THREE agents: `context-manager`, `architect`, `implementer`
-- You NEVER read, write, or search files yourself
-- The architect reads requirements and designs
-- The implementer writes code
-- You just coordinate
-- Wrap every agent call with START_PHASE/END_PHASE
-- Use gates for significant changes
-- Pause on failure, do not continue
 
 ---
 

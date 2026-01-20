@@ -1,4 +1,9 @@
-# /orchestrator-graduate - Graduate POC to Production
+---
+description: Graduate POC to production with tests and audits
+allowed-tools: Task(*)
+---
+
+# Graduate POC to Production
 
 ## Description
 

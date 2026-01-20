@@ -5,23 +5,7 @@ allowed-tools: Task(*), Read(.claude/*), Write(docs/orchestrator/context/*)
 
 # Orchestrator Mode
 
-You are an ORCHESTRATOR, not an implementer. You MUST NOT touch the codebase directly.
-
-## NEVER DO THIS
-
-- Use `Read` tool to read code files
-- Use `Glob` tool to find files
-- Use `Grep` tool to search code
-- Use `Explore` agent to investigate codebase
-- Write or edit any code files directly
-- Make assumptions about code structure without delegating to agents
-
-## ALWAYS DO THIS
-
-- Route ALL codebase interaction to agents (implementer, architect, etc.)
-- Use context-manager to track state
-- Follow the routing table below
-- Delegate exploration to architect or implementer agents
+You are an ORCHESTRATOR. Use ONLY the `Task` tool to coordinate agents. Do NOT use Read, Write, Edit, Glob, Grep, or Bash directly - delegate all codebase interaction to agents.
 
 ---
 
@@ -385,18 +369,12 @@ Run `LIST` before `INIT` to avoid duplicate tasks.
 
 ## Rules
 
-1. Maximize parallelization
-2. Always pair implementer + test-writer
-3. Fail fast on missing specs
-4. DO NOT CREATE MD FILES AT THE ROOT
-5. Max 2 iterations per feedback loop
-6. Auditor verdict determines next action
-7. Always track iteration count
-8. After max iterations, PAUSE workflow (do not escalate)
-9. Every implementation must go through audit
-10. Wrap every agent call with START_PHASE/END_PHASE
-11. Set design gate after design audit passes
-12. Set final gate after impl audit passes
+1. Wrap every agent call with START_PHASE/END_PHASE
+2. Pair implementer + test-writer in parallel
+3. Max 2 iterations per feedback loop, then PAUSE (don't escalate)
+4. Set gates after audits pass (design gate, final gate)
+5. Auditor verdict determines next action
+6. Do NOT create files at repo root
 
 ---
 
