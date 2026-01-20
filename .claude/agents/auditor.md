@@ -2,7 +2,7 @@
 name: auditor
 color: red
 description: Reviews design and implementation quality, detects flaws, triggers feedback loops
-tools: Read, Glob, Grep
+tools: Read, Glob
 model: opus
 ---
 
