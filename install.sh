@@ -83,16 +83,16 @@ AGENTS=(
   "test-writer"
 )
 
+for agent in "${AGENTS[@]}"; do
+  echo -e "  ${CYAN}→${NC} ${agent}.md"
+  curl -sL "$REPO_RAW/.claude/agents/${agent}.md" -o ".claude/agents/${agent}.md"
+done
+
 # Download docs (shared rules)
 echo ""
 echo -e "${BOLD}Docs${NC}"
 echo -e "  ${CYAN}→${NC} orchestrator-base.md"
 curl -sL "$REPO_RAW/.claude/docs/orchestrator-base.md" -o ".claude/docs/orchestrator-base.md"
-
-for agent in "${AGENTS[@]}"; do
-  echo -e "  ${CYAN}→${NC} ${agent}.md"
-  curl -sL "$REPO_RAW/.claude/agents/${agent}.md" -o ".claude/agents/${agent}.md"
-done
 
 # Download and setup MCP server
 echo ""

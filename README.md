@@ -131,7 +131,7 @@ Context management is handled by an MCP server (zero token cost vs LLM agent):
 
 ## Context Propagation
 
-All commands share state through the context-manager:
+All commands share state through the MCP server:
 
 ```
 docs/orchestrator/
