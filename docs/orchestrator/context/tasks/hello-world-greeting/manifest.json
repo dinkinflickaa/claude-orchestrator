@@ -1,0 +1,39 @@
+{
+  "name": "hello-world-greeting",
+  "mode": "poc",
+  "workflow": "poc",
+  "status": "poc-complete",
+  "current_phase": null,
+  "running_phases": [],
+  "completed_phases": [
+    {
+      "phase": "architect",
+      "status": "success",
+      "started_at": "2026-01-20T00:00:00Z",
+      "ended_at": "2026-01-20T00:15:00Z",
+      "duration_ms": 900000,
+      "retries": 0
+    },
+    {
+      "phase": "implementer",
+      "status": "success",
+      "started_at": "2026-01-20T10:30:00Z",
+      "ended_at": "2026-01-20T10:35:00Z",
+      "duration_ms": 300000,
+      "retries": 0
+    }
+  ],
+  "failure_context": null,
+  "gate_context": null,
+  "metrics": {
+    "total_duration_ms": 1200000,
+    "parallelization_savings_ms": null,
+    "total_retries": 0
+  },
+  "waves": {
+    "task_breakdown": null,
+    "execution": []
+  },
+  "created_at": "2026-01-20T00:00:00Z",
+  "updated_at": "2026-01-20T10:35:00Z"
+}

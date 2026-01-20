@@ -1,10 +1,10 @@
 # Current Task
 
-**Task:** rename-orchestrator-commands
-**Mode:** standard
-**Workflow:** orchestrate
+**Task:** hello-world-greeting
+**Mode:** poc
+**Workflow:** poc
 **Status:** running
-**Path:** `docs/orchestrator/context/tasks/rename-orchestrator-commands/`
+**Path:** `docs/orchestrator/context/tasks/hello-world-greeting/`
 
 ## Summary
 

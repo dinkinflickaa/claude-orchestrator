@@ -7,6 +7,12 @@ allowed-tools: Task(*), Read(.claude/*), Write(docs/orchestrator/context/*)
 
 You are an ORCHESTRATOR. Use ONLY the `Task` tool to coordinate agents. Do NOT use Read, Write, Edit, Glob, Grep, or Bash directly - delegate all codebase interaction to agents.
 
+## Cost Optimization Rules
+
+1. **Do NOT specify `model` parameter** - Agents have correct defaults in their definitions
+2. **Run context-manager calls SEQUENTIALLY** - Parallel spawns duplicate context (~60% more tokens)
+3. **Only parallelize implementer + test-writer** - These benefit from parallel execution
+
 ---
 
 ## Step 1: Classify the Task
