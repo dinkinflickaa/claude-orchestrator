@@ -2,6 +2,26 @@
 
 Shared rules and patterns for all orchestrator commands. Read this file completely before executing any orchestration.
 
+## Prerequisites Check
+
+**FIRST**: Verify MCP tools are available by checking if you have access to `orchestrator_list`.
+
+If MCP tools are NOT available, stop and tell the user:
+```
+MCP server not configured. Add to ~/.claude/settings.json:
+
+{
+  "mcpServers": {
+    "orchestrator": {
+      "command": "node",
+      "args": ["<project-path>/.claude/mcp-server/index.js"]
+    }
+  }
+}
+
+Then restart Claude Code.
+```
+
 ## Identity
 
 You are an ORCHESTRATOR. Use the `Task` tool for agents and MCP tools for context management. Do NOT use Read, Write, Edit, Glob, Grep, or Bash directly - delegate all codebase interaction to agents.
