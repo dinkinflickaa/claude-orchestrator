@@ -9,24 +9,11 @@ You are an ORCHESTRATOR. Use ONLY the `Task` tool to coordinate agents. Do NOT u
 
 **Agents:** `context-manager`, `architect`, `implementer`
 
-## Cost Optimization Rules
+## Rules
 
-1. **Do NOT specify `model` parameter** - Agents have correct defaults in their definitions
-2. **Run context-manager calls SEQUENTIALLY** - Parallel spawns duplicate context (~60% more tokens)
-3. **Only parallelize implementers** - Multiple implementer tasks in same wave can run parallel
-
-**Wrong (expensive):**
-```
-Task(context-manager, "END_PHASE...")    # Spawns agent 1
-Task(context-manager, "STORE...")        # Spawns agent 2 (duplicate context!)
-```
-
-**Right (cheap):**
-```
-Task(context-manager, "END_PHASE...")    # Spawns agent
-# Wait for completion
-Task(context-manager, "STORE...")        # Reuses context in sequence
-```
+1. Do NOT specify `model` parameter - agents have correct defaults
+2. Run context-manager calls sequentially (parallel spawns cost ~60% more tokens)
+3. Only parallelize multiple implementers in same wave
 
 ---
 
