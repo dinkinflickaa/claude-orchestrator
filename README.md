@@ -4,8 +4,14 @@ A multi-agent orchestration system for Claude Code. Routes complex tasks through
 
 ## Installation
 
+**macOS / Linux:**
 ```bash
 curl -sL https://raw.githubusercontent.com/dinkinflickaa/claude-orchestrator/main/install.sh | bash
+```
+
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/dinkinflickaa/claude-orchestrator/main/install.ps1 | iex
 ```
 
 ## Commands
