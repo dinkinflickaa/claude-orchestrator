@@ -3,47 +3,31 @@ description: Run orchestrated multi-agent workflow for complex tasks
 allowed-tools: Task(*), Read(.claude/*), Write(docs/orchestrator/context/*)
 ---
 
-# Orchestrator Mode
+# Full Orchestration Mode
 
-You are an ORCHESTRATOR. Use ONLY the `Task` tool to coordinate agents. Do NOT use Read, Write, Edit, Glob, Grep, or Bash directly - delegate all codebase interaction to agents.
+**First**: Read `.claude/docs/orchestrator-base.md` for shared rules.
 
-## Cost Optimization Rules
-
-1. **Do NOT specify `model` parameter** - Sub-agents have information about this.
-2. **Run context-manager calls SEQUENTIALLY** - Parallel spawns duplicate context (~60% more tokens)
-3. **Only parallelize implementer + test-writer** - These benefit from parallel execution
-4. **Use batched commands** - `BEGIN_PHASE` and `COMPLETE_PHASE` cut context-manager calls in half
-
----
-
-## Step 1: Classify the Task
+## Workflow
 
 ```
-Simple bug    -> 1-2 files, clear cause, obvious fix
-Complex bug   -> 3+ files, unclear cause, needs investigation
-New feature   -> Adding new functionality
-Design flaw   -> Architectural issue, needs redesign
+Architect → Design Audit → [Investigation Checkpoint] → Implementer + Test Writer → Test Runner → Impl Audit → [Final Gate]
 ```
 
-## Step 2: Initialize Context
+## Step 1: Classify & Initialize
+
+```
+Simple bug    -> Skip architect, go straight to Implementer + Test Writer
+Complex bug   -> Full workflow
+New feature   -> Full workflow
+Design flaw   -> Full workflow
+```
 
 ```
 Task(context-manager, "LIST")
 Task(context-manager, "INIT task: <task-name> mode: standard workflow: orchestrate")
 ```
 
-## Step 3: Follow Routing Table
-
-| Classification | Route                                                                                           |
-| -------------- | ----------------------------------------------------------------------------------------------- |
-| Simple bug     | Implementer + Test Writer -> Test Runner -> Impl Audit                                         |
-| Complex bug    | Architect -> Design Audit -> Implementer + Test Writer -> Test Runner -> Impl Audit            |
-| New feature    | Architect -> Design Audit -> Implementer + Test Writer -> Test Runner -> Impl Audit            |
-| Design flaw    | Architect (redesign) -> Design Audit -> Implementer + Test Writer -> Test Runner -> Impl Audit |
-
----
-
-## Phase Timing Pattern
+## Step 2: Architect
 
 ```
 Task(context-manager, "BEGIN_PHASE phase: architect needs: memory")
@@ -51,65 +35,7 @@ Task(architect, "DESIGN task: <task-slug> ...")
 Task(context-manager, "COMPLETE_PHASE phase: architect status: success content: <output>")
 ```
 
----
-
-## Workflow Diagram
-
-```
-                    +------------------+
-                    v                  |
-Architect -> Design Audit -(flaw)------+
-                |
-            (pass)
-                v
-        [INVESTIGATION CHECKPOINT]
-                |
-                +---------------+---------------+---------------+
-                |               |               |               |
-             (full)          (lite)          (shelf)        (cancel)
-                |               |               |               |
-                v               v               v               v
-    [Implementer + Test Writer] Switch POC  Save & Exit      Exit
-                |
-                v
-        Test Runner -> Implementation Audit
-                |
-            (pass)
-                v
-        [FINAL GATE] -> (approve) -> Complete
-                |
-            (reject/revise)
-                v
-            fail/loop
-```
-
-**Two-Stage Audit:**
-
-1. **Design Audit** (early): Catches architecture issues BEFORE implementation
-2. **Implementation Audit** (late): Catches code issues AFTER tests run
-
-**Feedback Loops:**
-
-- Design flaw detected: Design Audit -> Architect (max 2 iterations)
-- Implementation flaw detected: Implementation Audit -> Implementer (max 2 iterations)
-- Tests fail: Test Runner -> Implementer (max 2 retries)
-
----
-
-## Agent Output Format
-
-| Agent       | Required Sections                                         |
-| ----------- | --------------------------------------------------------- |
-| architect   | Design Decisions, Interfaces, Constraints, Files Affected |
-| implementer | Files Modified, Public API, Edge Cases, Notes for Testing |
-| test-writer | Test Files, Coverage Areas, Run Command                   |
-| auditor     | Verdict, Issues (Location, Description, Suggested Fix)    |
-
----
-
-## Phase 2: Design Audit
-
-After architect, BEFORE implementation:
+## Step 3: Design Audit
 
 ```
 Task(context-manager, "BEGIN_PHASE phase: design-audit needs: architect-output")
@@ -117,121 +43,43 @@ Task(auditor, "DESIGN-AUDIT task: <task-slug> iteration: <n>")
 Task(context-manager, "COMPLETE_PHASE phase: design-audit status: <success|failed> content: <output>")
 ```
 
-| Verdict       | Action                                                    |
-| ------------- | --------------------------------------------------------- |
-| `PASS`        | Continue to Investigation Checkpoint                      |
-| `DESIGN_FLAW` | `Task(architect, "REVISE: <issues>")` -> Re-audit (max 2) |
+| Verdict | Action |
+|---------|--------|
+| `PASS` | Continue to Investigation Checkpoint |
+| `DESIGN_FLAW` | Revise architect (max 2 iterations) |
 
-## Phase 2.5: Investigation Checkpoint
+## Step 4: Investigation Checkpoint
 
-After design audit passes, set gate for human decision on workflow path:
+See base rules. Present 4 options: full, lite, shelf, cancel.
 
-```
-Task(context-manager, "RETRIEVE needs: investigation-summary for_phase: checkpoint")
-Task(context-manager, "SET_GATE gate: investigation prompt: Investigation complete. Review findings and choose next step. artifacts: docs/orchestrator/context/tasks/<task-slug>/architect.md,docs/orchestrator/context/tasks/<task-slug>/design-audit.md")
-```
+## Step 5: Implementation (Waves)
 
-Present investigation summary with 4 options:
+Parse `taskBreakdown` from architect. Execute waves in parallel per base rules.
 
-- `full`: Continue with full workflow (tests, audits)
-- `lite`: Switch to POC mode (implementer only, skip tests/audits)
-- `shelf`: Save investigation and exit (resume later)
-- `cancel`: Mark task as cancelled and exit
-
-**Handle Decision:**
-
-```
-Task(context-manager, "RESUME decision: <user-decision>")
-```
-
-If decision is `full`:
-
-```
-# Continue to Implementation phase (existing flow)
-```
-
-If decision is `lite`:
-
-```
-Output: "Switching to POC mode..."
-Task(context-manager, "RESUME decision: lite")
-# Context-manager switches workflow to POC
-# Continue to implementer only (skip tests, audits)
-```
-
-If decision is `shelf`:
-
-```
-Output:
-INVESTIGATION SHELVED: <task-slug>
-Design saved. Resume anytime with: /orchestrator-resume <task-slug>
-```
-
-If decision is `cancel`:
-
-```
-Output:
-INVESTIGATION CANCELLED: <task-slug>
-Task marked as cancelled.
-```
-
-## Phase 3: Implementation
-
-### Wave Execution
-
-After design audit passes and checkpoint approved, execute implementation in waves:
-
-#### Compute Waves from Task Breakdown
-
-Parse `taskBreakdown` from architect output and group tasks by dependency level:
-
-- **Wave 0**: Tasks with no dependencies (dependencies: [])
-- **Wave N**: Tasks whose dependencies are all in waves < N
-
-#### Execute Each Wave
-
-For each wave (in order):
-
+For each task in wave (launch in parallel):
 ```
 Task(context-manager, "BEGIN_PHASE phase: implementer:task-<id> needs: architect-signatures")
 Task(implementer, "IMPLEMENT: task <id> - <description>")
 Task(context-manager, "COMPLETE_PHASE phase: implementer:task-<id> status: success content: <output>")
+```
 
+Test writer runs in parallel with implementer:
+```
 Task(context-manager, "BEGIN_PHASE phase: test-writer:task-<id> needs: architect-signatures")
-Task(test-writer, "WRITE TESTS: task <id> - <description>")
+Task(test-writer, "WRITE TESTS: task <id>")
 Task(context-manager, "COMPLETE_PHASE phase: test-writer:task-<id> status: success content: <output>")
 ```
 
-#### Wave Lifecycle States
+## Step 6: Test Runner
 
-- pending: Wave created, waiting for previous wave
-- running: At least one task executing
-- completed: All tasks in wave succeeded
-- failed: At least one task failed
-
-#### Partial Failure Handling
-
-If a task fails:
-
-1. Mark failed task's phase as failed
-2. Continue executing remaining tasks in current wave
-3. Mark wave as "failed" when all tasks complete
-4. Skip any Wave N+1 tasks that depend on the failed task
-5. Continue with remaining Wave N+1 tasks
-
-#### Test Runner Timing
-
-Test-runner executes ONCE after ALL waves complete (not per-wave):
-
+After ALL waves complete:
 ```
 Task(context-manager, "BEGIN_PHASE phase: test-runner needs: implementation")
 Task(test-runner, "RUN tests")
 Task(context-manager, "COMPLETE_PHASE phase: test-runner status: <result> content: <output>")
 ```
 
-## Phase 5: Implementation Audit
-
-After test-runner completes:
+## Step 7: Implementation Audit
 
 ```
 Task(context-manager, "BEGIN_PHASE phase: impl-audit needs: all")
@@ -239,146 +87,26 @@ Task(auditor, "IMPL-AUDIT task: <task-slug> iteration: <n>")
 Task(context-manager, "COMPLETE_PHASE phase: impl-audit status: <success|failed> content: <output>")
 ```
 
-| Verdict               | Action                                                              |
-| --------------------- | ------------------------------------------------------------------- |
-| `PASS`                | Continue to Final Gate                                              |
-| `IMPLEMENTATION_FLAW` | `Task(implementer, "FIX: <issues>")` -> Re-test -> Re-audit (max 2) |
+| Verdict | Action |
+|---------|--------|
+| `PASS` | Continue to Final Gate |
+| `IMPLEMENTATION_FLAW` | Fix and re-audit (max 2 iterations) |
 
-## Phase 5.5: Final Gate
-
-After implementation audit passes, set gate for final approval:
+## Step 8: Final Gate
 
 ```
-Task(context-manager, "SET_GATE gate: final prompt: Review implementation before marking complete artifacts: docs/orchestrator/context/tasks/<task-slug>/impl-audit.md,docs/orchestrator/context/tasks/<task-slug>/test-results.md")
-```
-
-**Gate Response:**
-
-- `approve`: Mark task as completed, output metrics summary
-- `reject`: Mark task as failed, exit workflow
-- `revise`: Send back to implementer with feedback
-
-```
+Task(context-manager, "SET_GATE gate: final prompt: Review implementation artifacts: <paths>")
+# Wait for user: approve, reject, or revise
 Task(context-manager, "RESUME decision: <user-decision>")
 ```
 
-If decision is `approve`:
-
-```
-# Continue to metrics output
-```
-
-## Metrics Output
-
-After final gate approval, display execution metrics:
+## Step 9: Complete
 
 ```
 Task(context-manager, "METRICS format: detailed")
 ```
 
-This shows:
-
-- Phase durations
-- Wave execution breakdown
-- Sequential vs parallel estimates
-- Parallelization savings percentage
-
-## Memory Capture
-
-Before marking workflow complete, offer to save noteworthy decisions/patterns:
-
-1. Collect `memory_candidates` from auditor outputs (design-audit and impl-audit)
-2. Deduplicate by title (skip if similar entry exists in memory files)
-3. Present to user via AskUserQuestion:
-
-```
-WORKFLOW COMPLETE: <task-slug>
-
-Candidates for project memory:
-
-DECISIONS:
-  [1] <title>: <summary>
-
-PATTERNS:
-  [2] <title>: <code snippet preview>
-
-Save to project memory?
-  1. Save all
-  2. Save selected (enter numbers)
-  3. Skip
-```
-
-4. If user selects items, append to appropriate file:
-   - Decisions → `docs/orchestrator/memory/decisions.md`
-   - Patterns → `docs/orchestrator/memory/patterns.md`
-
-Format for appending:
-
-```markdown
-## <Title>
-
-**Date:** YYYY-MM-DD
-**Task:** <task-slug>
-**Content:** <full content>
-```
-
----
-
-## Pause on Failure
-
-When max iterations (2) reached without passing audit:
-
-```
-Task(context-manager, "COMPLETE_PHASE phase: <phase> status: failed content: <output>")
-Task(context-manager, "PAUSE reason: Max iterations reached for <phase> without passing audit recommendations: Review audit feedback,Consider architectural changes,Manual intervention may be needed")
-```
-
-Output to user:
-
-```
-WORKFLOW PAUSED
-Reason: <reason>
-Phase: <phase>
-Attempts: <count>
-
-Recommendations:
-- <rec1>
-- <rec2>
-
-To continue: /orchestrator-resume <task-slug>
-```
-
-Do NOT escalate - pause and let user decide via /orchestrator-resume.
-
----
-
-## Context Manager
-
-Commands: `INIT`, `LIST`, `BEGIN_PHASE`, `COMPLETE_PHASE`, `PAUSE`, `SET_GATE`, `RESUME`, `METRICS`
-
-Run `LIST` before `INIT` to avoid duplicate tasks.
-
-### Phase Commands
-
-| Phase                | BEGIN_PHASE needs                        |
-| -------------------- | ---------------------------------------- |
-| Architect            | `memory`                                 |
-| Design Audit         | `architect-output`                       |
-| Implementer          | `architect-signatures`                   |
-| Test Writer          | `architect-signatures`                   |
-| Implementation Audit | `all`                                    |
-| Architect (revision) | `design-audit-feedback,architect-output` |
-| Implementer (fix)    | `impl-audit-feedback,implementation`     |
-
----
-
-## Rules
-
-1. Wrap every agent call with BEGIN_PHASE/COMPLETE_PHASE
-2. Max 2 iterations per feedback loop, then PAUSE (don't escalate)
-3. Set gates after audits pass (investigation checkpoint, final gate)
-4. Auditor verdict determines next action
-5. Do NOT create files at repo root
+Offer to save memory candidates from auditor outputs.
 
 ---
 
