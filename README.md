@@ -4,6 +4,8 @@ A multi-agent orchestration system for Claude Code. Routes complex tasks through
 
 ## Installation
 
+**Prerequisites:** [Node.js](https://nodejs.org/) (for MCP server)
+
 **macOS / Linux:**
 ```bash
 curl -sL https://raw.githubusercontent.com/dinkinflickaa/claude-orchestrator/main/install.sh | bash
@@ -12,6 +14,11 @@ curl -sL https://raw.githubusercontent.com/dinkinflickaa/claude-orchestrator/mai
 **Windows (PowerShell):**
 ```powershell
 irm https://raw.githubusercontent.com/dinkinflickaa/claude-orchestrator/main/install.ps1 | iex
+```
+
+If npm install fails, run manually:
+```bash
+cd .claude/mcp-server && npm install
 ```
 
 ## Commands

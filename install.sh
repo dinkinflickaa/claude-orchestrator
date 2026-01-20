@@ -102,8 +102,17 @@ echo -e "  ${CYAN}→${NC} package.json"
 curl -sL "$REPO_RAW/mcp-server/package.json" -o ".claude/mcp-server/package.json"
 echo -e "  ${CYAN}→${NC} index.js"
 curl -sL "$REPO_RAW/mcp-server/index.js" -o ".claude/mcp-server/index.js"
-echo -e "  ${CYAN}→${NC} Installing dependencies..."
-(cd .claude/mcp-server && npm install --silent 2>/dev/null)
+
+# Check if npm is available
+if command -v npm &> /dev/null; then
+  echo -e "  ${CYAN}→${NC} Installing dependencies..."
+  if ! (cd .claude/mcp-server && npm install --silent 2>/dev/null); then
+    echo -e "  ${YELLOW}!!${NC} npm install failed. Run manually: cd .claude/mcp-server && npm install"
+  fi
+else
+  echo -e "  ${YELLOW}!!${NC} npm not found. Install Node.js, then run:"
+  echo -e "     cd .claude/mcp-server && npm install"
+fi
 
 # Create .mcp.json for MCP server registration
 echo ""

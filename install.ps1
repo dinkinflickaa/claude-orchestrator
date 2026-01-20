@@ -91,10 +91,26 @@ Write-Host "  -> package.json" -ForegroundColor Cyan
 Invoke-WebRequest -Uri "$REPO_RAW/mcp-server/package.json" -OutFile ".claude/mcp-server/package.json" -UseBasicParsing
 Write-Host "  -> index.js" -ForegroundColor Cyan
 Invoke-WebRequest -Uri "$REPO_RAW/mcp-server/index.js" -OutFile ".claude/mcp-server/index.js" -UseBasicParsing
-Write-Host "  -> Installing dependencies..." -ForegroundColor Cyan
-Push-Location ".claude/mcp-server"
-npm install --silent 2>$null
-Pop-Location
+
+# Check if npm is available
+$npmPath = Get-Command npm -ErrorAction SilentlyContinue
+if ($npmPath) {
+    Write-Host "  -> Installing dependencies..." -ForegroundColor Cyan
+    Push-Location ".claude/mcp-server"
+    try {
+        & npm install --silent
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "  !! npm install failed. Run manually: cd .claude/mcp-server && npm install" -ForegroundColor Yellow
+        }
+    } catch {
+        Write-Host "  !! npm install failed: $_" -ForegroundColor Yellow
+        Write-Host "  !! Run manually: cd .claude/mcp-server && npm install" -ForegroundColor Yellow
+    }
+    Pop-Location
+} else {
+    Write-Host "  !! npm not found. Install Node.js, then run:" -ForegroundColor Yellow
+    Write-Host "     cd .claude/mcp-server && npm install" -ForegroundColor Yellow
+}
 
 # Create .mcp.json
 Write-Host ""
