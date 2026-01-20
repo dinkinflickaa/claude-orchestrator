@@ -25,6 +25,7 @@ echo ""
 # Create .claude directory structure
 mkdir -p .claude/commands
 mkdir -p .claude/agents
+mkdir -p .claude/docs
 mkdir -p docs/orchestrator/context/tasks
 mkdir -p docs/orchestrator/memory
 mkdir -p .claude/orchestrator/metrics
@@ -79,10 +80,15 @@ AGENTS=(
   "auditor"
   "context-manager"
   "implementer"
-  "spec-writer"
   "test-runner"
   "test-writer"
 )
+
+# Download docs (shared rules)
+echo ""
+echo -e "${BOLD}Docs${NC}"
+echo -e "  ${CYAN}→${NC} orchestrator-base.md"
+curl -sL "$REPO_RAW/.claude/docs/orchestrator-base.md" -o ".claude/docs/orchestrator-base.md"
 
 for agent in "${AGENTS[@]}"; do
   echo -e "  ${CYAN}→${NC} ${agent}.md"

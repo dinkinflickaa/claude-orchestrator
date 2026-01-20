@@ -27,7 +27,7 @@ Complete workflow with design audits, specs, tests, and implementation audits.
 
 **Workflow:**
 ```
-Architect → Design Audit → Spec → [Implementer + Test Writer] → Test Runner → Impl Audit
+Architect → Design Audit → [Implementer + Test Writer] → Test Runner → Impl Audit
 ```
 
 ### `/orchestrator-lite` - Rapid Prototyping
@@ -50,7 +50,7 @@ Fast-track for experimental features. Skips audits, specs, and tests.
 Architect → Implementer → Store Debt
 ```
 
-**What gets skipped:** Design audit, spec writer, test writer, test runner, implementation audit
+**What gets skipped:** Design audit, test writer, test runner, implementation audit
 
 ### `/orchestrator-graduate` - Promote POC to Production
 
@@ -82,12 +82,13 @@ your-project/
     │   ├── orchestrator-lite.md         # /orchestrator-lite command
     │   ├── orchestrator-graduate.md     # /orchestrator-graduate command
     │   └── orchestrator-resume.md       # /orchestrator-resume command
+    ├── docs/
+    │   └── orchestrator-base.md         # Shared rules for all commands
     └── agents/
         ├── architect.md
         ├── auditor.md
         ├── context-manager.md
         ├── implementer.md
-        ├── spec-writer.md
         ├── test-runner.md
         └── test-writer.md
 ```
@@ -96,9 +97,8 @@ your-project/
 
 | Agent | Purpose |
 |-------|---------|
-| architect | Design guidance, patterns, SOLID principles |
-| spec-writer | Creates implementation specs with ordered tasks |
-| implementer | Writes code based on specs |
+| architect | Design guidance, patterns, signatures, task breakdown |
+| implementer | Writes code based on architect output |
 | test-writer | Writes tests in parallel with implementation |
 | test-runner | Executes tests and reports results |
 | auditor | Reviews design and implementation quality |
@@ -112,14 +112,12 @@ All commands share state through the context-manager:
 docs/orchestrator/
 ├── context/
 │   ├── current-task.md
-│   ├── history.md
 │   └── tasks/
 │       └── <task-slug>/
 │           ├── manifest.json
 │           ├── architect.md
-│           ├── spec.md
-│           ├── implementations/
-│           ├── tests/
+│           ├── design-audit.md
+│           ├── impl-audit.md
 │           ├── test-results.md
 │           └── debt.md            # POC only
 └── memory/
