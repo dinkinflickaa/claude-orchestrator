@@ -84,10 +84,12 @@ your-project/
     │   └── orchestrator-resume.md       # /orchestrator-resume command
     ├── docs/
     │   └── orchestrator-base.md         # Shared rules for all commands
+    ├── mcp-server/                      # Context management (zero token cost)
+    │   ├── package.json
+    │   └── index.js
     └── agents/
         ├── architect.md
         ├── auditor.md
-        ├── context-manager.md
         ├── implementer.md
         ├── test-runner.md
         └── test-writer.md
@@ -102,7 +104,30 @@ your-project/
 | test-writer | Writes tests in parallel with implementation |
 | test-runner | Executes tests and reports results |
 | auditor | Reviews design and implementation quality |
-| context-manager | Maintains shared state across phases |
+
+## MCP Server
+
+Context management is handled by an MCP server (zero token cost vs LLM agent):
+
+| Tool | Purpose |
+|------|---------|
+| `orchestrator_init` | Initialize new task |
+| `orchestrator_begin_phase` | Start phase + retrieve context |
+| `orchestrator_complete_phase` | End phase + store output |
+| `orchestrator_set_gate` | Set approval gate |
+| `orchestrator_resume` | Continue past gate |
+
+**Setup**: Add to `~/.claude/settings.json`:
+```json
+{
+  "mcpServers": {
+    "orchestrator": {
+      "command": "node",
+      "args": ["/path/to/your-project/.claude/mcp-server/index.js"]
+    }
+  }
+}
+```
 
 ## Context Propagation
 

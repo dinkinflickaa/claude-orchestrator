@@ -1,6 +1,6 @@
 ---
 description: Resume a paused task or approve a gate
-allowed-tools: Task(context-manager)
+allowed-tools: mcp__orchestrator__*
 ---
 
 # Resume Command
@@ -20,7 +20,7 @@ Resume a paused workflow or respond to a gate prompt.
 ### Step 1: Get Task State
 
 ```
-Task(context-manager, "RETRIEVE needs: manifest for_phase: resume task: <task-slug>")
+orchestrator_retrieve({needs: "manifest", for_phase: "resume", task: "<task-slug>"})
 ```
 
 ### Step 2: Display State to User
@@ -36,7 +36,7 @@ Task(context-manager, "RETRIEVE needs: manifest for_phase: resume task: <task-sl
 ### Step 3: Get User Decision & Execute
 
 ```
-Task(context-manager, "RESUME decision: <user-decision>")
+orchestrator_resume({decision: "<user-decision>"})
 ```
 
 ### Step 4: Route Based on Decision

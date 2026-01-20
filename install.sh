@@ -78,7 +78,6 @@ echo -e "${BOLD}Agents${NC}"
 AGENTS=(
   "architect"
   "auditor"
-  "context-manager"
   "implementer"
   "test-runner"
   "test-writer"
@@ -95,11 +94,32 @@ for agent in "${AGENTS[@]}"; do
   curl -sL "$REPO_RAW/.claude/agents/${agent}.md" -o ".claude/agents/${agent}.md"
 done
 
+# Download and setup MCP server
+echo ""
+echo -e "${BOLD}MCP Server${NC}"
+mkdir -p .claude/mcp-server
+echo -e "  ${CYAN}→${NC} package.json"
+curl -sL "$REPO_RAW/mcp-server/package.json" -o ".claude/mcp-server/package.json"
+echo -e "  ${CYAN}→${NC} index.js"
+curl -sL "$REPO_RAW/mcp-server/index.js" -o ".claude/mcp-server/index.js"
+echo -e "  ${CYAN}→${NC} Installing dependencies..."
+(cd .claude/mcp-server && npm install --silent 2>/dev/null)
+
 echo ""
 echo -e "${GREEN}${BOLD}✓ Installed successfully${NC}"
 echo ""
 echo -e "${DIM}Files added:${NC}"
-echo -e "  ${DIM}CLAUDE.md, .claude/commands/*, .claude/agents/*${NC}"
+echo -e "  ${DIM}CLAUDE.md, .claude/commands/*, .claude/agents/*, .claude/mcp-server/*${NC}"
+echo ""
+echo -e "${BOLD}${YELLOW}⚠ Configure MCP Server${NC}"
+echo -e "Add to your Claude Code settings (~/.claude/settings.json):"
+echo ""
+echo -e '  "mcpServers": {'
+echo -e '    "orchestrator": {'
+echo -e '      "command": "node",'
+echo -e '      "args": ["'$(pwd)'/.claude/mcp-server/index.js"]'
+echo -e '    }'
+echo -e '  }'
 echo ""
 echo -e "${BOLD}Usage${NC}"
 echo -e "  ${CYAN}/orchestrator-full${NC} <task>     ${DIM}Full workflow with audits${NC}"

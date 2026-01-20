@@ -4,14 +4,38 @@ Shared rules and patterns for all orchestrator commands. Read this file complete
 
 ## Identity
 
-You are an ORCHESTRATOR. Use ONLY the `Task` tool to coordinate agents. Do NOT use Read, Write, Edit, Glob, Grep, or Bash directly - delegate all codebase interaction to agents.
+You are an ORCHESTRATOR. Use the `Task` tool for agents and MCP tools for context management. Do NOT use Read, Write, Edit, Glob, Grep, or Bash directly - delegate all codebase interaction to agents.
 
 ## Cost Optimization Rules
 
 1. **Do NOT specify `model` parameter** - Agents have correct defaults
-2. **Run context-manager calls SEQUENTIALLY** - Parallel spawns duplicate context (~60% more tokens)
-3. **Use batched commands** - `BEGIN_PHASE` and `COMPLETE_PHASE` cut context-manager calls in half
-4. **Parallelize within waves** - Tasks in the same wave with no interdependencies run in parallel
+2. **Use MCP tools for context** - Zero token cost vs Task(context-manager)
+3. **Parallelize within waves** - Tasks in the same wave with no interdependencies run in parallel
+
+## MCP Tools Reference
+
+| Tool | Usage |
+|------|-------|
+| `orchestrator_list` | Check existing tasks before init |
+| `orchestrator_init` | Create new task: `{task, mode, workflow}` |
+| `orchestrator_begin_phase` | Start phase + retrieve context: `{phase, needs}` |
+| `orchestrator_complete_phase` | End phase + store output: `{phase, status, content, task_id?, iteration?}` |
+| `orchestrator_set_gate` | Human approval gate: `{gate, prompt, artifacts?}` |
+| `orchestrator_resume` | Continue past gate: `{decision}` |
+| `orchestrator_pause` | Pause workflow: `{reason, recommendations?}` |
+| `orchestrator_metrics` | Get metrics: `{format?}` |
+
+### BEGIN_PHASE Needs Reference
+
+| Phase | needs |
+|-------|-------|
+| Architect | `memory` |
+| Design Audit | `architect-output` |
+| Implementer | `architect-signatures` |
+| Test Writer | `architect-signatures` |
+| Implementation Audit | `all` |
+| Architect (revision) | `design-audit-feedback,architect-output` |
+| Implementer (fix) | `impl-audit-feedback,implementation` |
 
 ## Wave Execution
 
@@ -34,60 +58,25 @@ Task(implementer, "task 2...")  # simultaneously
 # Wait for wave to complete, then Wave 1 - parallel
 Task(implementer, "task 3...")
 Task(implementer, "task 4...")
-Task(implementer, "task 5...")
 ```
-
-### Wave Lifecycle States
-
-- pending: Wave created, waiting for previous wave
-- running: At least one task executing
-- completed: All tasks in wave succeeded
-- failed: At least one task failed
 
 ### Partial Failure Handling
 
 If a task fails:
-
 1. Mark failed task's phase as failed
 2. Continue executing remaining tasks in current wave
-3. Mark wave as "failed" when all tasks complete
-4. Skip any Wave N+1 tasks that depend on the failed task
-5. Continue with remaining Wave N+1 tasks
+3. Skip Wave N+1 tasks that depend on failed task
+4. Continue with remaining Wave N+1 tasks
 
 ## Phase Timing Pattern
 
-Every agent call uses batched commands:
+Every agent call:
 
 ```
-Task(context-manager, "BEGIN_PHASE phase: <name> needs: <context>")
+orchestrator_begin_phase({phase: "<name>", needs: "<context>"})
 Task(<agent>, "<prompt>")
-Task(context-manager, "COMPLETE_PHASE phase: <name> status: <success|failed> content: <output>")
+orchestrator_complete_phase({phase: "<name>", status: "success", content: "<output>"})
 ```
-
-## Context Manager Commands
-
-| Command | Usage |
-|---------|-------|
-| `LIST` | Check existing tasks before INIT |
-| `INIT task: <name> mode: <standard\|poc> workflow: <orchestrate\|poc\|graduate>` | Create new task |
-| `BEGIN_PHASE phase: <name> needs: <context>` | Start phase and retrieve context |
-| `COMPLETE_PHASE phase: <name> status: <success\|failed> content: <output>` | End phase and store output |
-| `SET_GATE gate: <investigation\|final> prompt: <text> artifacts: <paths>` | Set human approval gate |
-| `RESUME decision: <approve\|reject\|full\|lite\|shelf\|cancel>` | Continue past gate/pause |
-| `PAUSE reason: <text> recommendations: <list>` | Pause workflow for human |
-| `METRICS format: <summary\|detailed>` | Display execution metrics |
-
-### BEGIN_PHASE Needs Reference
-
-| Phase | needs |
-|-------|-------|
-| Architect | `memory` |
-| Design Audit | `architect-output` |
-| Implementer | `architect-signatures` |
-| Test Writer | `architect-signatures` |
-| Implementation Audit | `all` |
-| Architect (revision) | `design-audit-feedback,architect-output` |
-| Implementer (fix) | `impl-audit-feedback,implementation` |
 
 ## Investigation Checkpoint
 
@@ -99,9 +88,9 @@ After design audit passes, present 4 options:
 - `cancel`: Mark task as cancelled and exit
 
 ```
-Task(context-manager, "SET_GATE gate: investigation prompt: Investigation complete. Review findings and choose next step. artifacts: <paths>")
+orchestrator_set_gate({gate: "investigation", prompt: "Investigation complete. Choose next step.", artifacts: "<paths>"})
 # Wait for user decision via AskUserQuestion
-Task(context-manager, "RESUME decision: <user-decision>")
+orchestrator_resume({decision: "<user-decision>"})
 ```
 
 ## Feedback Loops
@@ -115,8 +104,8 @@ Task(context-manager, "RESUME decision: <user-decision>")
 When max iterations (2) reached:
 
 ```
-Task(context-manager, "COMPLETE_PHASE phase: <phase> status: failed content: <output>")
-Task(context-manager, "PAUSE reason: Max iterations reached recommendations: <list>")
+orchestrator_complete_phase({phase: "<phase>", status: "failed", content: "<output>"})
+orchestrator_pause({reason: "Max iterations reached", recommendations: "<list>"})
 ```
 
 Output to user:
@@ -133,7 +122,7 @@ Do NOT escalate - pause and let user decide.
 
 ## Rules
 
-1. Wrap every agent call with BEGIN_PHASE/COMPLETE_PHASE
+1. Wrap every agent call with begin_phase/complete_phase
 2. Parallelize tasks within the same wave
 3. Max 2 iterations per feedback loop, then PAUSE
 4. Set gates after audits pass

@@ -1,0 +1,17 @@
+{
+  "name": "@anthropic/orchestrator-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Claude Orchestrator context management",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "orchestrator-mcp": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "license": "MIT"
+}

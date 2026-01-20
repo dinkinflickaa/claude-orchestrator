@@ -1,6 +1,6 @@
 ---
 description: Create a proof-of-concept implementation without tests or audits
-allowed-tools: Task(*)
+allowed-tools: Task(*), mcp__orchestrator__*
 ---
 
 # POC Mode - Orchestrator
@@ -18,14 +18,14 @@ Architect → [Optional Checkpoint] → Implementer (waves) → [Final Gate]
 ## Step 1: Initialize
 
 ```
-Task(context-manager, "LIST")
-Task(context-manager, "INIT task: <slug> mode: poc workflow: poc")
+orchestrator_list()
+orchestrator_init({task: "<slug>", mode: "poc", workflow: "poc"})
 ```
 
 ## Step 2: Architect
 
 ```
-Task(context-manager, "BEGIN_PHASE phase: architect needs: memory")
+orchestrator_begin_phase({phase: "architect", needs: "memory"})
 Task(architect, "DESIGN task: <slug>
 
 POC MODE - Prioritize speed over perfection.
@@ -34,7 +34,7 @@ User request:
 <user's request>
 
 Provide: Design decisions, file structure, interfaces, implementation steps")
-Task(context-manager, "COMPLETE_PHASE phase: architect status: success content: <output>")
+orchestrator_complete_phase({phase: "architect", status: "success", content: "<output>"})
 ```
 
 ## Step 2.5: Investigation Checkpoint (Optional)
@@ -50,11 +50,11 @@ Parse `taskBreakdown` from architect. Execute waves in parallel per base rules.
 
 For each task in wave (launch ALL tasks in wave in parallel):
 ```
-Task(context-manager, "BEGIN_PHASE phase: implementer:task-<id> needs: architect-signatures")
+orchestrator_begin_phase({phase: "implementer:task-<id>", needs: "architect-signatures"})
 Task(implementer, "IMPLEMENT POC: task <id> - <description>
 
 POC MODE - Focus on core functionality, skip edge cases.")
-Task(context-manager, "COMPLETE_PHASE phase: implementer:task-<id> status: success content: <output>")
+orchestrator_complete_phase({phase: "implementer:task-<id>", status: "success", content: "<output>"})
 ```
 
 If no `taskBreakdown` (simple task), use single implementer.
@@ -62,24 +62,23 @@ If no `taskBreakdown` (simple task), use single implementer.
 ## Step 4: Store Debt
 
 ```
-Task(context-manager, "STORE phase: debt content:
-task: <slug>
+orchestrator_store({phase: "debt", content: "task: <slug>
 status: poc-complete
 skipped: design-audit, tests, impl-audit
-files: <list from implementer>")
+files: <list from implementer>"})
 ```
 
 ## Step 5: Final Gate
 
 ```
-Task(context-manager, "SET_GATE gate: final prompt: Review POC implementation artifacts: <paths>")
-Task(context-manager, "RESUME decision: <user-decision>")
+orchestrator_set_gate({gate: "final", prompt: "Review POC implementation artifacts: <paths>"})
+orchestrator_resume({decision: "<user-decision>"})
 ```
 
 ## Step 6: Report
 
 ```
-Task(context-manager, "METRICS format: summary")
+orchestrator_metrics({format: "summary"})
 ```
 
 Tell user:
