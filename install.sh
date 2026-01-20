@@ -25,6 +25,30 @@ echo ""
 # Create .claude directory structure
 mkdir -p .claude/commands
 mkdir -p .claude/agents
+mkdir -p docs/orchestrator/context/tasks
+mkdir -p docs/orchestrator/memory
+mkdir -p .claude/orchestrator/metrics
+
+# Migration: Move legacy paths to new locations
+migrate_if_exists() {
+  local src="$1"
+  local dst="$2"
+  if [ -d "$src" ] && [ "$(ls -A "$src" 2>/dev/null)" ]; then
+    echo -e "  ${YELLOW}→${NC} Migrating $src to $dst"
+    mkdir -p "$dst"
+    cp -r "$src"/* "$dst"/ 2>/dev/null || true
+    rm -rf "$src"
+  fi
+}
+
+# Context: .claude/context/ -> docs/orchestrator/context/
+migrate_if_exists ".claude/context" "docs/orchestrator/context"
+
+# Memory: .claude/memory/ -> docs/orchestrator/memory/
+migrate_if_exists ".claude/memory" "docs/orchestrator/memory"
+
+# Metrics: .claude/metrics/ -> .claude/orchestrator/metrics/
+migrate_if_exists ".claude/metrics" ".claude/orchestrator/metrics"
 
 # Download commands
 echo -e "${BOLD}Commands${NC}"
@@ -49,17 +73,6 @@ curl -sL "$REPO_RAW/CLAUDE.md" -o CLAUDE.md
 echo ""
 echo -e "${BOLD}Agents${NC}"
 
-# Agent colors for visual distinction
-declare -A AGENT_COLORS=(
-  ["architect"]="${BLUE}"
-  ["auditor"]="${RED}"
-  ["context-manager"]="${YELLOW}"
-  ["implementer"]="${GREEN}"
-  ["spec-writer"]="${MAGENTA}"
-  ["test-runner"]="${CYAN}"
-  ["test-writer"]="${CYAN}"
-)
-
 AGENTS=(
   "architect"
   "auditor"
@@ -71,8 +84,7 @@ AGENTS=(
 )
 
 for agent in "${AGENTS[@]}"; do
-  color="${AGENT_COLORS[$agent]}"
-  echo -e "  ${color}→${NC} ${agent}.md"
+  echo -e "  ${CYAN}→${NC} ${agent}.md"
   curl -sL "$REPO_RAW/.claude/agents/${agent}.md" -o ".claude/agents/${agent}.md"
 done
 

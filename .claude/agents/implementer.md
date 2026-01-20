@@ -1,5 +1,6 @@
 ---
 name: implementer
+color: green
 description: Executes single implementation task - writes code only, no tests or docs
 tools: Read, Write, Edit, Bash, Grep
 ---

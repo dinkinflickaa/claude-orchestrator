@@ -108,19 +108,26 @@ your-project/
 All commands share state through the context-manager:
 
 ```
-.claude/context/
-├── current-task.md
-├── history.md
-└── tasks/
-    └── <task-slug>/
-        ├── metadata.json      # mode, status, timestamps
-        ├── architect.md
-        ├── spec.md
-        ├── implementations/
-        ├── tests/
-        ├── test-results.md
-        ├── debt.md            # POC only
-        └── ...
+docs/orchestrator/
+├── context/
+│   ├── current-task.md
+│   ├── history.md
+│   └── tasks/
+│       └── <task-slug>/
+│           ├── manifest.json
+│           ├── architect.md
+│           ├── spec.md
+│           ├── implementations/
+│           ├── tests/
+│           ├── test-results.md
+│           └── debt.md            # POC only
+└── memory/
+    ├── decisions.md              # Architectural decisions
+    └── patterns.md               # Reusable patterns
+
+.claude/orchestrator/
+└── metrics/
+    └── execution-history.json    # Operational metrics
 ```
 
 **POC Lifecycle:**

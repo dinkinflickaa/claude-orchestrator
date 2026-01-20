@@ -1,5 +1,6 @@
 ---
 name: test-runner
+color: cyan
 description: Executes tests and reports structured results - no code changes
 tools: Bash
 ---

@@ -1,5 +1,6 @@
 ---
 name: test-writer
+color: cyan
 description: Writes tests in parallel with implementer - receives spec, not code
 tools: Read, Write, Edit, Grep
 ---

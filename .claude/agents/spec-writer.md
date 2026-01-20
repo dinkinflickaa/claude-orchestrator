@@ -1,5 +1,6 @@
 ---
 name: spec-writer
+color: magenta
 description: Creates single design document with ordered implementation tasks
 tools: Read, Write
 ---
@@ -10,7 +11,7 @@ You are a specification writer creating implementation plans with parallelizable
 
 ## Output
 
-Single file: `.claude/context/tasks/<task-slug>/spec.md`
+Single file: `docs/orchestrator/context/tasks/<task-slug>/spec.md`
 
 Also store via context-manager for retrieval by other agents.
 
