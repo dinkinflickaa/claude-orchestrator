@@ -9,9 +9,10 @@ You are an ORCHESTRATOR. Use ONLY the `Task` tool to coordinate agents. Do NOT u
 
 ## Cost Optimization Rules
 
-1. **Do NOT specify `model` parameter** - Agents have correct defaults in their definitions
+1. **Do NOT specify `model` parameter** - Sub-agents have information about this.
 2. **Run context-manager calls SEQUENTIALLY** - Parallel spawns duplicate context (~60% more tokens)
 3. **Only parallelize implementer + test-writer** - These benefit from parallel execution
+4. **Use batched commands** - `BEGIN_PHASE` and `COMPLETE_PHASE` cut context-manager calls in half
 
 ---
 
@@ -44,27 +45,10 @@ Task(context-manager, "INIT task: <task-name> mode: standard workflow: orchestra
 
 ## Phase Timing Pattern
 
-Wrap every agent call with START_PHASE/END_PHASE:
-
 ```
-Task(context-manager, "START_PHASE phase: architect")
+Task(context-manager, "BEGIN_PHASE phase: architect needs: memory")
 Task(architect, "DESIGN task: <task-slug> ...")
-# On success:
-Task(context-manager, "END_PHASE phase: architect status: success")
-# On failure:
-Task(context-manager, "END_PHASE phase: architect status: failed")
-```
-
-For parallel phases, start all then end as they complete:
-
-```
-Task(context-manager, "START_PHASE phase: implementer:task-1")
-Task(context-manager, "START_PHASE phase: test-writer:task-1")
-Task(implementer, "implement task-1")
-Task(test-writer, "write tests for task-1")
-# As each completes:
-Task(context-manager, "END_PHASE phase: implementer:task-1 status: success")
-Task(context-manager, "END_PHASE phase: test-writer:task-1 status: success")
+Task(context-manager, "COMPLETE_PHASE phase: architect status: success content: <output>")
 ```
 
 ---
@@ -78,15 +62,25 @@ Architect -> Design Audit -(flaw)------+
                 |
             (pass)
                 v
-        [DESIGN GATE] -> (approve) -> Spec Writer -> [Implementer + Test Writer] -> Test Runner -> Implementation Audit
-                |                                                                                           |
-            (reject/revise)                                                                                (pass)
-                |                                                                                           v
-                v                                                                                   [FINAL GATE] -> (approve) -> Complete
-            fail/loop                                                                                       |
-                                                                                                        (reject/revise)
-                                                                                                            v
-                                                                                                        fail/loop
+        [INVESTIGATION CHECKPOINT]
+                |
+                +---------------+---------------+---------------+
+                |               |               |               |
+             (full)          (lite)          (shelf)        (cancel)
+                |               |               |               |
+                v               v               v               v
+           Spec Writer     Switch POC      Save & Exit      Exit
+                |
+                v
+    [Implementer + Test Writer] -> Test Runner -> Implementation Audit
+                                                            |
+                                                        (pass)
+                                                            v
+                                                    [FINAL GATE] -> (approve) -> Complete
+                                                            |
+                                                        (reject/revise)
+                                                            v
+                                                        fail/loop
 ```
 
 **Two-Stage Audit:**
@@ -119,41 +113,67 @@ Architect -> Design Audit -(flaw)------+
 After architect, BEFORE spec writer:
 
 ```
-Task(context-manager, "START_PHASE phase: design-audit")
+Task(context-manager, "BEGIN_PHASE phase: design-audit needs: architect-output")
 Task(auditor, "DESIGN-AUDIT task: <task-slug> iteration: <n>")
-Task(context-manager, "END_PHASE phase: design-audit status: <success|failed>")
+Task(context-manager, "COMPLETE_PHASE phase: design-audit status: <success|failed> content: <output>")
 ```
 
 | Verdict       | Action                                                    |
 | ------------- | --------------------------------------------------------- |
-| `PASS`        | Continue to Design Gate                                   |
+| `PASS`        | Continue to Investigation Checkpoint                      |
 | `DESIGN_FLAW` | `Task(architect, "REVISE: <issues>")` -> Re-audit (max 2) |
 
-## Phase 2.5: Design Gate
+## Phase 2.5: Investigation Checkpoint
 
-After design audit passes, set gate for human approval:
+After design audit passes, set gate for human decision on workflow path:
 
 ```
-Task(context-manager, "SET_GATE gate: design prompt: Review architect design before implementation artifacts: docs/orchestrator/context/tasks/<task-slug>/architect.md,docs/orchestrator/context/tasks/<task-slug>/design-audit.md")
+Task(context-manager, "RETRIEVE needs: investigation-summary for_phase: checkpoint")
+Task(context-manager, "SET_GATE gate: investigation prompt: Investigation complete. Review findings and choose next step. artifacts: docs/orchestrator/context/tasks/<task-slug>/architect.md,docs/orchestrator/context/tasks/<task-slug>/design-audit.md")
 ```
 
-**Gate Response:**
+Present investigation summary with 4 options:
 
-- `approve`: Continue to Spec Writer
-- `reject`: Mark task as failed, exit workflow
-- `revise`: Send back to architect with feedback
+- `full`: Continue with full workflow (spec, tests, audits)
+- `lite`: Switch to POC mode (implementer only, skip spec/tests/audits)
+- `shelf`: Save investigation and exit (resume later)
+- `cancel`: Mark task as cancelled and exit
+
+**Handle Decision:**
 
 ```
 Task(context-manager, "RESUME decision: <user-decision>")
 ```
 
-If decision is `revise`:
+If decision is `full`:
 
 ```
-Task(context-manager, "START_PHASE phase: architect-revision")
-Task(architect, "REVISE: <user feedback>")
-Task(context-manager, "END_PHASE phase: architect-revision status: success")
-# Loop back to design audit
+# Continue to Spec Writer phase (existing flow)
+```
+
+If decision is `lite`:
+
+```
+Output: "Switching to POC mode..."
+Task(context-manager, "RESUME decision: lite")
+# Context-manager switches workflow to POC
+# Continue to implementer only (skip spec, tests, audits)
+```
+
+If decision is `shelf`:
+
+```
+Output:
+INVESTIGATION SHELVED: <task-slug>
+Design saved. Resume anytime with: /orchestrator-resume <task-slug>
+```
+
+If decision is `cancel`:
+
+```
+Output:
+INVESTIGATION CANCELLED: <task-slug>
+Task marked as cancelled.
 ```
 
 ## Phase 3: Implementation
@@ -174,18 +194,13 @@ Parse `taskBreakdown` from architect output and group tasks by dependency level:
 For each wave (in order):
 
 ```
-# Start all tasks in wave in parallel
-Task(context-manager, "START_PHASE phase: implementer:task-<id>")
-Task(context-manager, "START_PHASE phase: test-writer:task-<id>")
-
-# Dispatch agents in parallel
+Task(context-manager, "BEGIN_PHASE phase: implementer:task-<id> needs: spec-signatures")
 Task(implementer, "IMPLEMENT: task <id> - <description>")
-Task(test-writer, "WRITE TESTS: task <id> - <description>")
+Task(context-manager, "COMPLETE_PHASE phase: implementer:task-<id> status: success content: <output>")
 
-# Wait for all tasks in wave to complete
-# Then end phases
-Task(context-manager, "END_PHASE phase: implementer:task-<id> status: success")
-Task(context-manager, "END_PHASE phase: test-writer:task-<id> status: success")
+Task(context-manager, "BEGIN_PHASE phase: test-writer:task-<id> needs: spec-signatures")
+Task(test-writer, "WRITE TESTS: task <id> - <description>")
+Task(context-manager, "COMPLETE_PHASE phase: test-writer:task-<id> status: success content: <output>")
 ```
 
 #### Wave Lifecycle States
@@ -210,10 +225,9 @@ If a task fails:
 Test-runner executes ONCE after ALL waves complete (not per-wave):
 
 ```
-# After all waves complete
-Task(context-manager, "START_PHASE phase: test-runner")
+Task(context-manager, "BEGIN_PHASE phase: test-runner needs: implementation")
 Task(test-runner, "RUN tests")
-Task(context-manager, "END_PHASE phase: test-runner status: <result>")
+Task(context-manager, "COMPLETE_PHASE phase: test-runner status: <result> content: <output>")
 ```
 
 ## Phase 5: Implementation Audit
@@ -221,9 +235,9 @@ Task(context-manager, "END_PHASE phase: test-runner status: <result>")
 After test-runner completes:
 
 ```
-Task(context-manager, "START_PHASE phase: impl-audit")
+Task(context-manager, "BEGIN_PHASE phase: impl-audit needs: all")
 Task(auditor, "IMPL-AUDIT task: <task-slug> iteration: <n>")
-Task(context-manager, "END_PHASE phase: impl-audit status: <success|failed>")
+Task(context-manager, "COMPLETE_PHASE phase: impl-audit status: <success|failed> content: <output>")
 ```
 
 | Verdict               | Action                                                              |
@@ -316,7 +330,7 @@ Format for appending:
 When max iterations (2) reached without passing audit:
 
 ```
-Task(context-manager, "END_PHASE phase: <phase> status: failed")
+Task(context-manager, "COMPLETE_PHASE phase: <phase> status: failed content: <output>")
 Task(context-manager, "PAUSE reason: Max iterations reached for <phase> without passing audit recommendations: Review audit feedback,Consider architectural changes,Manual intervention may be needed")
 ```
 
@@ -341,46 +355,32 @@ Do NOT escalate - pause and let user decide via /orchestrator-resume.
 
 ## Context Manager
 
-Commands: `INIT`, `STORE`, `RETRIEVE`, `LIST`, `START_PHASE`, `END_PHASE`, `PAUSE`, `SET_GATE`, `RESUME`
+Commands: `INIT`, `LIST`, `BEGIN_PHASE`, `COMPLETE_PHASE`, `PAUSE`, `SET_GATE`, `RESUME`, `METRICS`
 
 Run `LIST` before `INIT` to avoid duplicate tasks.
 
-### Before Each Phase (RETRIEVE)
+### Phase Commands
 
-| Phase                | Retrieve Command                                                             |
-| -------------------- | ---------------------------------------------------------------------------- |
-| Design Audit         | `RETRIEVE needs: architect-output for_phase: design-audit`                   |
-| Spec Writer          | `RETRIEVE needs: architect-output for_phase: spec`                           |
-| Implementer          | `RETRIEVE needs: spec-signatures for_phase: implementation`                  |
-| Test Writer          | `RETRIEVE needs: spec-signatures for_phase: testing`                         |
-| Implementation Audit | `RETRIEVE needs: all for_phase: impl-audit`                                  |
-| Architect (revision) | `RETRIEVE needs: design-audit-feedback,architect-output for_phase: revision` |
-| Implementer (fix)    | `RETRIEVE needs: impl-audit-feedback,implementation for_phase: fix`          |
-
-### After Each Phase (STORE)
-
-| Phase                | Store Command                                                      |
-| -------------------- | ------------------------------------------------------------------ |
-| Architect            | `STORE phase: architect content: <output>`                         |
-| Design Audit         | `STORE phase: design-audit iteration: <n> content: <output>`       |
-| Architect (revision) | `STORE phase: architect-revision iteration: <n> content: <output>` |
-| Spec Writer          | `STORE phase: spec content: <output>`                              |
-| Implementer          | `STORE phase: implementation task_id: <n> content: <output>`       |
-| Test Writer          | `STORE phase: tests task_id: <n> content: <output>`                |
-| Test Runner          | `STORE phase: test-results content: <output>`                      |
-| Implementation Audit | `STORE phase: impl-audit iteration: <n> content: <output>`         |
-| Implementer (fix)    | `STORE phase: implementation-fix iteration: <n> content: <output>` |
+| Phase                | BEGIN_PHASE needs                        |
+| -------------------- | ---------------------------------------- |
+| Architect            | `memory`                                 |
+| Design Audit         | `architect-output`                       |
+| Spec Writer          | `architect-output`                       |
+| Implementer          | `spec-signatures`                        |
+| Test Writer          | `spec-signatures`                        |
+| Implementation Audit | `all`                                    |
+| Architect (revision) | `design-audit-feedback,architect-output` |
+| Implementer (fix)    | `impl-audit-feedback,implementation`     |
 
 ---
 
 ## Rules
 
-1. Wrap every agent call with START_PHASE/END_PHASE
-2. Pair implementer + test-writer in parallel
-3. Max 2 iterations per feedback loop, then PAUSE (don't escalate)
-4. Set gates after audits pass (design gate, final gate)
-5. Auditor verdict determines next action
-6. Do NOT create files at repo root
+1. Wrap every agent call with BEGIN_PHASE/COMPLETE_PHASE
+2. Max 2 iterations per feedback loop, then PAUSE (don't escalate)
+3. Set gates after audits pass (investigation checkpoint, final gate)
+4. Auditor verdict determines next action
+5. Do NOT create files at repo root
 
 ---
 

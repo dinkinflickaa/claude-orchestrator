@@ -11,7 +11,7 @@ You are an ORCHESTRATOR. Use ONLY the `Task` tool to coordinate agents. Do NOT u
 
 ## Rules
 
-1. Do NOT specify `model` parameter - agents have correct defaults
+1. **Do NOT specify `model` parameter** - Sub-agents have information about this.
 2. Run context-manager calls sequentially (parallel spawns cost ~60% more tokens)
 3. Only parallelize multiple implementers in same wave
 
@@ -30,7 +30,7 @@ Task(context-manager, "INIT task: <slug-from-user-request> mode: poc workflow: p
 ### Step 2: Architect
 
 ```
-Task(context-manager, "START_PHASE phase: architect")
+Task(context-manager, "BEGIN_PHASE phase: architect needs: memory")
 Task(architect, "DESIGN task: <slug>
 
 POC MODE - Prioritize speed over perfection.
@@ -39,52 +39,86 @@ User request:
 <paste the user's full request here>
 
 Provide: Design decisions, file structure, interfaces, implementation steps")
-Task(context-manager, "END_PHASE phase: architect status: success")
+Task(context-manager, "COMPLETE_PHASE phase: architect status: success content: <architect output>")
 ```
 
-Wait for architect to complete, then store:
+### Step 2.5: Investigation Checkpoint (Optional)
+
+For POC mode, investigation checkpoint is optional but recommended for significant changes:
 
 ```
-Task(context-manager, "STORE phase: architect content: <paste architect output>")
+Task(context-manager, "SET_GATE gate: investigation prompt: Investigation complete. Review findings and choose next step. artifacts: docs/orchestrator/context/tasks/<task-slug>/architect.md")
 ```
 
-### Step 2.5: Design Gate (Optional)
+Present investigation summary with 4 options:
 
-For POC mode, design gate is optional but recommended for larger changes:
+- `full`: Promote to full orchestration workflow (spec, tests, audits)
+- `lite`: Continue with POC implementation (default behavior)
+- `shelf`: Save investigation and exit (resume later)
+- `cancel`: Mark task as cancelled and exit
+
+**Handle Decision:**
 
 ```
-Task(context-manager, "SET_GATE gate: design prompt: Review POC design before implementation artifacts: docs/orchestrator/context/tasks/<task-slug>/architect.md")
+Task(context-manager, "RESUME decision: <user-decision>")
 ```
 
-If gate set, wait for user decision via /orchestrator-resume before continuing to Step 3.
+If decision is `full`:
 
-**Skip gate for:**
+```
+Output: "Promoting to full orchestration mode..."
+Task(context-manager, "RESUME decision: full")
+# Context-manager switches workflow from POC to full orchestration
+# Workflow continues with: spec-writer, implementer, test-writer, test-runner, impl-audit
+```
+
+If decision is `lite`:
+
+```
+# Continue to Step 3 (Implementer) - default POC flow
+```
+
+If decision is `shelf`:
+
+```
+Output:
+INVESTIGATION SHELVED: <task-slug>
+Design saved. Resume anytime with: /orchestrator-resume <task-slug>
+```
+
+If decision is `cancel`:
+
+```
+Output:
+INVESTIGATION CANCELLED: <task-slug>
+Task marked as cancelled.
+```
+
+**Skip checkpoint for:**
+
 - Small, well-understood changes
 - Time-critical prototypes
-- Exploratory work
+- Quick proof-of-concepts
+- Localized, low-risk changes
 
-**Use gate for:**
-- Significant architectural decisions
+**Use checkpoint for:**
+
+- Significant architectural changes
+- POC that may be graduated to full implementation
+- Investigation findings that should be reviewed
 - Changes affecting multiple systems
-- Work that may be graduated later
 
 ### Step 3: Implementer
 
 ```
-Task(context-manager, "START_PHASE phase: implementer")
+Task(context-manager, "BEGIN_PHASE phase: implementer needs: architect-output")
 Task(implementer, "IMPLEMENT task: <slug>
 
 POC MODE - Focus on core functionality, skip edge cases.
 
 Architect design:
 <paste the architect output here>")
-Task(context-manager, "END_PHASE phase: implementer status: success")
-```
-
-Wait for implementer to complete, then store:
-
-```
-Task(context-manager, "STORE phase: implementation content: <paste implementer output>")
+Task(context-manager, "COMPLETE_PHASE phase: implementer status: success content: <implementer output>")
 ```
 
 ## Wave Execution (Parallel Implementers)
@@ -92,32 +126,30 @@ Task(context-manager, "STORE phase: implementation content: <paste implementer o
 If architect provides `taskBreakdown`, execute in waves:
 
 ### Compute Waves
+
 Group tasks by dependency level:
+
 - **Wave 0**: Tasks with dependencies: []
 - **Wave N**: Tasks whose dependencies are all in waves < N
 
 ### Execute Each Wave
 
 For each wave:
+
 ```
-# Start all implementer tasks in parallel
-Task(context-manager, "START_PHASE phase: implementer:task-<id>")
-...
-
-# Dispatch implementers in parallel
+Task(context-manager, "BEGIN_PHASE phase: implementer:task-<id> needs: architect-output")
 Task(implementer, "IMPLEMENT POC: task <id> - <description>")
-...
-
-# Wait for all to complete, then end phases
-Task(context-manager, "END_PHASE phase: implementer:task-<id> status: success")
-...
+Task(context-manager, "COMPLETE_PHASE phase: implementer:task-<id> status: success content: <output>")
 ```
 
 ### Fallback
+
 If no `taskBreakdown` provided (simple task), use single implementer as before.
 
 ### Partial Failure
+
 If any task fails:
+
 1. Mark that task's phase as failed
 2. Continue with other tasks in wave
 3. Skip dependent tasks in next waves
@@ -142,6 +174,7 @@ Task(context-manager, "METRICS format: summary")
 ```
 
 Output shows:
+
 - Total duration
 - Parallelization savings (if waves used)
 - Files created/modified count
@@ -155,6 +188,7 @@ Task(context-manager, "SET_GATE gate: final prompt: Review POC implementation be
 ```
 
 Wait for user decision:
+
 - `approve`: Continue to Step 5 (Report)
 - `reject`: Mark task as failed
 - `revise`: Loop back to implementer with feedback
@@ -166,6 +200,7 @@ Task(context-manager, "RESUME decision: <user-decision>")
 ### Step 5: Report
 
 Tell the user:
+
 - POC complete
 - Files created/modified (from implementer output)
 - Run `/orchestrator-graduate <slug>` to add tests and audits
@@ -177,11 +212,12 @@ Tell the user:
 If architect or implementer fails:
 
 ```
-Task(context-manager, "END_PHASE phase: <phase> status: failed")
+Task(context-manager, "COMPLETE_PHASE phase: <phase> status: failed content: <error>")
 Task(context-manager, "PAUSE reason: <error description> recommendations: Check error logs,Review requirements,Try simpler approach")
 ```
 
 Output to user:
+
 ```
 POC WORKFLOW PAUSED
 Phase: <phase>
