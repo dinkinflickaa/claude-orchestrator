@@ -30,8 +30,8 @@ Issues: <auditor-issues>
 ## Process
 
 **Initial:**
-1. Read signatures and constraints from orchestrator
-2. Read all declared input files from spec
+1. Read signatures and constraints from orchestrator (spec or architect output)
+2. Read all declared input files
 3. Implement - write code matching exact signatures
 4. Lint - run project's linter, fix until clean
 5. Report files changed
