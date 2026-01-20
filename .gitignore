@@ -44,3 +44,4 @@ temp/
 # Task artifacts are committed for PR visibility
 docs/orchestrator/context/current-task.md
 docs/orchestrator/context/history.md
+docs/orchestrator/history.md
